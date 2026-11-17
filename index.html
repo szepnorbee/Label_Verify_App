@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Romer Verify">
-<title>Romer Labs – Etikett Ellenőrzés (PWA)</title>
+<title>Romer Labs – Etiketten-Verifizierung</title>
 <link id="pwaManifest" rel="manifest">
 <link id="appleTouchIcon" rel="apple-touch-icon">
 <link id="favIcon" rel="icon" type="image/png">
@@ -74,7 +74,7 @@
   }
 
   .brand-title {
-    font-size: 1.12rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: var(--brand-light);
     letter-spacing: 0.2px;
@@ -84,7 +84,7 @@
   }
 
   .brand-sub {
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
@@ -107,11 +107,11 @@
   }
 
   .lang-btn {
-    padding: 7px 8px;
+    padding: 8px 11px;
     border: none;
     background: transparent;
     color: var(--muted);
-    font-size: 0.73rem;
+    font-size: 0.78rem;
     font-weight: 700;
     cursor: pointer;
   }
@@ -188,7 +188,7 @@
   }
 
   .btn-mini-qr {
-    padding: 5px 9px;
+    padding: 5px 10px;
     border-radius: 7px;
     border: 1px solid var(--brand-light);
     background: var(--input-bg);
@@ -674,22 +674,21 @@
 <body>
 
 <div class="container">
-  <!-- Header with top-right camera icon -->
+  <!-- Header with DE/EN Switch & Top-Right Camera Icon -->
   <div class="header">
     <div class="brand-wrap">
       <div class="brand-title">Romer Labs Verify</div>
-      <div id="subTitle" class="brand-sub">Offline Etikett-ellenőrzés &amp; Nyomtatási dátum</div>
+      <div id="subTitle" class="brand-sub">Offline Etiketten-Prüfung &amp; Druckdatum</div>
     </div>
 
     <div class="header-actions">
       <div class="lang-switch" role="group" aria-label="Language">
-        <button id="btnHu" class="lang-btn active" onclick="setLang('hu')">HU</button>
-        <button id="btnDe" class="lang-btn" onclick="setLang('de')">DE</button>
+        <button id="btnDe" class="lang-btn active" onclick="setLang('de')">DE</button>
         <button id="btnEn" class="lang-btn" onclick="setLang('en')">EN</button>
       </div>
 
       <!-- Top-right Camera Button for Label QR Scan -->
-      <button id="btnHeaderCam" class="cam-icon-btn" onclick="openQrScanner('label')" title="Címke QR beolvasása kamerával" aria-label="Címke QR beolvasása kamerával">
+      <button id="btnHeaderCam" class="cam-icon-btn" onclick="openQrScanner('label')" title="Etikett per QR-Code scannen" aria-label="Etikett per QR-Code scannen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
           <circle cx="12" cy="13" r="4"></circle>
@@ -699,37 +698,37 @@
   </div>
 
   <!-- Optional PWA Install Banner -->
-  <button id="btnInstallPwa" class="btn-secondary" onclick="installPwa()">📲 Alkalmazás telepítése (PWA)</button>
+  <button id="btnInstallPwa" class="btn-secondary" onclick="installPwa()">📲 App installieren (PWA)</button>
 
   <!-- Active SecretKey Indicator -->
   <div id="keyStatusBar" class="key-status-bar">
     <div class="key-status-text">
       <span class="key-dot"></span>
-      <span id="keyStatusLabel">Aktív kulcs: betöltve</span>
+      <span id="keyStatusLabel">Aktiver Schlüssel: geladen</span>
     </div>
-    <button id="btnRescanKeyTop" class="btn-mini-qr" onclick="openQrScanner('secret')">QR Kulcs</button>
+    <button id="btnRescanKeyTop" class="btn-mini-qr" onclick="openQrScanner('secret')">QR-Key</button>
   </div>
 
   <!-- Main Label Verification Card -->
   <div class="card">
     <div class="field-group">
-      <label id="lblReorder" for="reorder">1. REORDER (Cikkszám)</label>
+      <label id="lblReorder" for="reorder">1. REORDER</label>
       <input id="reorder" type="text" placeholder="10006320" autocomplete="off" spellcheck="false">
     </div>
 
     <div class="field-group">
-      <label id="lblLot" for="lot">2. LOT (Gyártási tétel)</label>
+      <label id="lblLot" for="lot">2. LOT</label>
       <input id="lot" type="text" placeholder="1000632043" autocomplete="off" spellcheck="false">
     </div>
 
     <div class="field-group">
-      <label id="lblSec" for="sec">3. SEC (Counter - Biztonsági kód)</label>
+      <label id="lblSec" for="sec">3. SEC (Counter - Sicherheitscode)</label>
       <input id="sec" type="text" placeholder="5 - 8B14-C09E" autocomplete="off" spellcheck="false">
-      <div id="hintSec" class="field-hint">Formátum a címkén: [Counter] - [XXXX-XXXX], pl. 5 - 8B14-C09E</div>
+      <div id="hintSec" class="field-hint">Format auf dem Etikett: [Counter] - [XXXX-XXXX], z. B. 5 - 8B14-C09E</div>
     </div>
 
-    <button id="btnVerify" class="btn-primary" onclick="verifyLabel()">Etikett ellenőrzése</button>
-    <button id="btnClear" class="btn-secondary" onclick="clearFields()">Mezők törlése</button>
+    <button id="btnVerify" class="btn-primary" onclick="verifyLabel()">Etikett prüfen</button>
+    <button id="btnClear" class="btn-secondary" onclick="clearFields()">Felder löschen</button>
 
     <div id="resultBox" class="result">
       <div id="resultTitle" class="result-title"></div>
@@ -743,19 +742,19 @@
 
   <!-- SecretKey Management Card -->
   <div class="card">
-    <div id="sumSettings" class="section-title">Titkosító kulcs (SecretKey)</div>
+    <div id="sumSettings" class="section-title">Sicherheitsschlüssel (SecretKey)</div>
     <div class="field-group" style="margin-bottom: 0;">
-      <label id="lblSecret" for="secretKey">SecretKey (egyeznie kell a NiceLabel kulccsal)</label>
+      <label id="lblSecret" for="secretKey">SecretKey (muss mit NiceLabel übereinstimmen)</label>
       <div class="key-wrap">
         <input id="secretKey" type="password" value="Romer2026!#SecSalt" autocomplete="off" spellcheck="false" oninput="onSecretInput()">
-        <button id="btnToggleKey" type="button" class="btn-toggle" onclick="toggleKeyVisibility()">Mutat</button>
+        <button id="btnToggleKey" type="button" class="btn-toggle" onclick="toggleKeyVisibility()">Anzeigen</button>
       </div>
       <div id="asciiWarn" class="ascii-warn"></div>
-      <div id="hintSecret" class="field-hint">Csak szabványos ASCII karaktereket (ékezet nélküli betűk, számok, jelek) használj.</div>
+      <div id="hintSecret" class="field-hint">Bitte nur ASCII-Zeichen (Buchstaben ohne Umlaute, Ziffern, Sonderzeichen) verwenden.</div>
     </div>
     <div class="btn-row">
-      <button id="btnScanKeyCard" class="btn-secondary" onclick="openQrScanner('secret')">📷 Kulcs QR</button>
-      <button id="btnSaveKey" class="btn-primary" onclick="saveKey()">Kulcs mentése</button>
+      <button id="btnScanKeyCard" class="btn-secondary" onclick="openQrScanner('secret')">📷 Key QR</button>
+      <button id="btnSaveKey" class="btn-primary" onclick="saveKey()">Schlüssel speichern</button>
     </div>
     <div id="saveMsg" class="save-msg"></div>
   </div>
@@ -765,18 +764,18 @@
 <div id="scannerModal" class="scanner-modal" role="dialog" aria-modal="true">
   <div class="scanner-inner">
     <div class="scanner-top">
-      <span id="scannerModeBadge" class="scanner-badge">1. LÉPÉS: TITKOSÍTÓ KULCS</span>
-      <button id="btnCloseScanner" class="btn-close-scan" onclick="switchToManualMode()" aria-label="Bezárás">✕</button>
+      <span id="scannerModeBadge" class="scanner-badge">SCHRITT 1: SECRETKEY</span>
+      <button id="btnCloseScanner" class="btn-close-scan" onclick="switchToManualMode()" aria-label="Schließen">✕</button>
     </div>
 
-    <h2 id="scannerTitle" class="scanner-title">Titkosító kulcs beolvasása (QR)</h2>
-    <p id="scannerDesc" class="scanner-desc">Irányítsd a kamerát a SecretKey QR-kódra. Beolvasás után a program automatikusan manuális adatbevitelre vált.</p>
+    <h2 id="scannerTitle" class="scanner-title">Sicherheitsschlüssel scannen (QR)</h2>
+    <p id="scannerDesc" class="scanner-desc">Scannen Sie den SecretKey-QR-Code. Danach wechselt die App zur manuellen Dateneingabe.</p>
 
     <div class="viewport-box">
       <video id="qrVideo" playsinline muted autoplay></video>
       <div class="scan-frame"><div class="scan-line"></div></div>
       <div id="camPlaceholder" class="cam-placeholder">
-        <div id="camErrorText">Kamera indítása folyamatban...</div>
+        <div id="camErrorText">Kamera wird gestartet...</div>
       </div>
     </div>
 
@@ -784,10 +783,10 @@
 
     <div class="scanner-controls">
       <div class="scanner-tools-row">
-        <button id="btnTorch" type="button" class="btn-tool" onclick="toggleTorch()" style="display:none;">🔦 Vaku</button>
-        <button id="btnPhotoFallback" type="button" class="btn-tool" onclick="triggerPhotoScan()">🖼️ QR képből</button>
+        <button id="btnTorch" type="button" class="btn-tool" onclick="toggleTorch()" style="display:none;">🔦 Licht</button>
+        <button id="btnPhotoFallback" type="button" class="btn-tool" onclick="triggerPhotoScan()">🖼️ Aus Bild</button>
       </div>
-      <button id="btnSwitchManual" type="button" class="btn-manual-switch" onclick="switchToManualMode()">Váltás manuális bevitelre</button>
+      <button id="btnSwitchManual" type="button" class="btn-manual-switch" onclick="switchToManualMode()">Zur manuellen Eingabe wechseln</button>
     </div>
     <input id="qrFileInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleFileQr(event)">
   </div>
@@ -800,7 +799,7 @@
 const SEARCH_START_YEAR = 2025;
 const SEARCH_END_YEAR = 2045;
 
-// QR URL adatszerkezet változói:
+// QR-URL-Datenstruktur:
 // https://wdd-plm-romer.dsm-firmenich.com/wdd/?partNumber=[Reorder_1]&lotNumber=[KIT_DATA.LOT]&Secret=[SecurityCounter]-[SecurityCode]
 let Reorder_1 = '';
 let KIT_DATA = { LOT: '' };
@@ -808,56 +807,6 @@ let SecurityCounter = '';
 let SecurityCode = '';
 
 const I18N = {
-  hu: {
-    pageTitle: 'Romer Labs – Etikett Ellenőrzés',
-    subTitle: 'Offline Etikett-ellenőrzés & Nyomtatási dátum',
-    headerCamTitle: 'Címke QR beolvasása kamerával',
-    installPwa: '📲 Alkalmazás telepítése (PWA)',
-    keyLoaded: (mask) => `Aktív kulcs: ${mask}`,
-    keyMissing: 'Nincs titkosító kulcs megadva!',
-    btnRescanKeyTop: 'QR Kulcs',
-    lblReorder: '1. REORDER (Cikkszám)',
-    lblLot: '2. LOT (Gyártási tétel)',
-    lblSec: '3. SEC (Counter - Biztonsági kód)',
-    hintSec: 'Formátum a címkén: [Counter] - [XXXX-XXXX], pl. 5 - 8B14-C09E',
-    btnVerify: 'Etikett ellenőrzése',
-    btnClear: 'Mezők törlése',
-    sumSettings: 'Titkosító kulcs (SecretKey)',
-    lblSecret: 'SecretKey (egyeznie kell a NiceLabel kulccsal)',
-    hintSecret: 'Csak szabványos ASCII karaktereket (ékezet nélküli betűk, számok, jelek) használj.',
-    asciiWarn: 'Figyelem: A nem ASCII karakterek (pl. ékezetek) eltérő hash-t eredményezhetnek.',
-    btnScanKeyCard: '📷 Kulcs QR',
-    btnSaveKey: 'Kulcs mentése',
-    btnShow: 'Mutat',
-    btnHide: 'Elrejt',
-    savedMsg: 'Titkosító kulcs elmentve a készülékre.',
-    toastKeyScanned: 'Titkosító kulcs beolvasva és elmentve!',
-    toastLabelScanned: 'Címke QR adatok beolvasva!',
-    printDateLabel: 'Visszafejtett nyomtatási dátum',
-    weekdays: ['Vasárnap', 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat'],
-    incTitle: 'HIÁNYOS ADATOK',
-    incSub: 'Kérlek add meg a REORDER, LOT és SEC értékeket.',
-    fmtTitle: 'ÉRVÉNYTELEN SEC FORMÁTUM',
-    fmtSub: 'Elvárt formátum: Counter - XXXX-XXXX (pl. 5 - 8B14-C09E).',
-    valTitle: 'EREDETI ETIKETT (ÉRVÉNYES)',
-    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}\nCounter: ${cnt} | SEC: ${code} (${ms} ms)`,
-    invTitle: 'HAMISÍTVÁNY VAGY HIBA (ÉRVÉNYTELEN)',
-    invSub: (r, l, cnt, code) => `Nem található egyező nyomtatási dátum (${SEARCH_START_YEAR}–${SEARCH_END_YEAR})!\n(${r} | ${l} | Counter: ${cnt} | Megadva: ${code})`,
-    scanSecretBadge: '1. LÉPÉS: TITKOSÍTÓ KULCS',
-    scanSecretTitle: 'Titkosító kulcs beolvasása (QR)',
-    scanSecretDesc: 'Olvasd be kamerával a SecretKey QR-kódot. Beolvasás után a program manuális adatbevitelre vált.',
-    scanLabelBadge: 'CÍMKE QR BEOLVASÁS',
-    scanLabelTitle: 'Etikett adatok beolvasása (QR)',
-    scanLabelDesc: 'Olvasd be a Romer Labs címke QR-kódját a mezők automatikus kitöltéséhez és ellenőrzéséhez.',
-    btnTorch: '🔦 Vaku',
-    btnPhotoFallback: '🖼️ QR képből',
-    btnSwitchManual: 'Váltás manuális bevitelre',
-    camStarting: 'Kamera indítása...',
-    camDenied: 'A kamera nem érhető el (engedély megtagadva vagy nem HTTPS kapcsolat). Használd a "QR képből" vagy a "Váltás manuális bevitelre" gombot.',
-    errWrongQrForSecret: 'Ez egy termékcímke QR-kódja, nem a titkosító kulcs! Olvasd be a SecretKey QR-kódot, vagy válts manuális bevitelre.',
-    errWrongQrForLabel: 'Érvénytelen címke QR-formátum. Elvárt paraméterek: partNumber, lotNumber és Secret.',
-    errNoQrInImage: 'Nem található felismerhető QR-kód a kiválasztott képen.'
-  },
   de: {
     pageTitle: 'Romer Labs – Etiketten-Verifizierung',
     subTitle: 'Offline Etiketten-Prüfung & Druckdatum',
@@ -884,7 +833,7 @@ const I18N = {
     toastKeyScanned: 'SecretKey gescannt und gespeichert!',
     toastLabelScanned: 'Etikettendaten per QR übernommen!',
     printDateLabel: 'Ermitteltes Druckdatum',
-    weekdays: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
+    weekdays: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Szombat'],
     incTitle: 'UNVOLLSTÄNDIGE EINGABE',
     incSub: 'Bitte REORDER, LOT und SEC vollständig eingeben.',
     fmtTitle: 'UNGÜLTIGES SEC-FORMAT',
@@ -960,7 +909,10 @@ const I18N = {
   }
 };
 
-let currentLang = 'hu';
+// Fix Saturday typo in German weekdays
+I18N.de.weekdays[6] = 'Samstag';
+
+let currentLang = 'de';
 let lastState = null;
 let deferredInstallPrompt = null;
 
@@ -1014,9 +966,9 @@ function initSingleFilePwa() {
     document.getElementById('favIcon').href = icon192;
 
     const manifestObj = {
-      name: 'Romer Labs – Label Verify',
+      name: 'Romer Labs – Etiketten-Verifizierung',
       short_name: 'Romer Verify',
-      description: 'Offline Romer Labs Label Verification & QR Scanner',
+      description: 'Offline Etiketten-Prüfung & QR-Scanner',
       start_url: window.location.href.split('#')[0],
       display: 'standalone',
       orientation: 'portrait',
@@ -1031,7 +983,6 @@ function initSingleFilePwa() {
     const manifestEncoded = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
     document.getElementById('pwaManifest').setAttribute('href', manifestEncoded);
 
-    // Offline cache snapshot via CacheStorage API
     if ('caches' in window && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
       caches.open('romer-verify-pwa-v1').then(cache => {
         cache.add(window.location.href).catch(() => {});
@@ -1058,7 +1009,7 @@ async function installPwa() {
 
 /* ---------- Language & UI Helpers ---------- */
 function setLang(lang) {
-  currentLang = I18N[lang] ? lang : 'hu';
+  currentLang = I18N[lang] ? lang : 'de';
   localStorage.setItem('romer_verify_lang', currentLang);
   document.documentElement.lang = currentLang;
 
@@ -1088,7 +1039,6 @@ function setLang(lang) {
   const keyInput = document.getElementById('secretKey');
   document.getElementById('btnToggleKey').textContent = keyInput.type === 'password' ? t.btnShow : t.btnHide;
 
-  document.getElementById('btnHu').classList.toggle('active', currentLang === 'hu');
   document.getElementById('btnDe').classList.toggle('active', currentLang === 'de');
   document.getElementById('btnEn').classList.toggle('active', currentLang === 'en');
 
@@ -1251,7 +1201,6 @@ async function startCameraStream() {
     await video.play();
     placeholder.classList.remove('visible');
 
-    // Check Torch availability
     const track = videoStream.getVideoTracks()[0];
     if (track && typeof track.getCapabilities === 'function') {
       const caps = track.getCapabilities();
@@ -1314,7 +1263,6 @@ async function scanLoop() {
 async function decodeQrFromSource(source, width, height) {
   if (!width || !height) return null;
 
-  // 1. Native BarcodeDetector
   if (barcodeDetector) {
     try {
       const codes = await barcodeDetector.detect(source);
@@ -1326,7 +1274,6 @@ async function decodeQrFromSource(source, width, height) {
     }
   }
 
-  // 2. Pure-JS jsQR fallback (iOS Safari / Firefox)
   if (typeof window.jsQR === 'function') {
     const canvas = document.getElementById('qrCanvas');
     const maxDim = 720;
@@ -1392,7 +1339,6 @@ function parseLabelQrPayload(rawText) {
 
   if (!params) return null;
 
-  // Case-insensitive parameter lookup
   let partNum = '';
   let lotNum = '';
   let secretFull = '';
@@ -1423,13 +1369,11 @@ function handleDecodedQr(rawText) {
   if (!cleaned) return false;
 
   if (scanMode === 'secret') {
-    // Reject label URLs when expecting the SecretKey
     if (parseLabelQrPayload(cleaned) || /wdd-plm-romer\.dsm-firmenich\.com/i.test(cleaned)) {
       showScannerAlert(t.errWrongQrForSecret);
       return false;
     }
 
-    // Store scanned SecretKey, persist locally, and switch to manual entry view
     const keyInput = document.getElementById('secretKey');
     keyInput.value = cleaned;
     localStorage.setItem('romer_sec_key', cleaned);
@@ -1449,7 +1393,6 @@ function handleDecodedQr(rawText) {
       return false;
     }
 
-    // Populate variables & inputs
     Reorder_1 = parsed.Reorder_1;
     KIT_DATA = parsed.KIT_DATA;
     SecurityCounter = parsed.SecurityCounter;
@@ -1716,9 +1659,9 @@ window.addEventListener('DOMContentLoaded', () => {
   updateKeyStatusBar();
 
   const savedLang = localStorage.getItem('romer_verify_lang');
-  setLang(savedLang || 'hu');
+  setLang(savedLang || 'de');
 
-  // Program indításakor: titkosító kulcs (SecretKey) bekérése kamerán keresztül (QR)
+  // Beim Programmstart: SecretKey per Kamera (QR) anfordern
   openQrScanner('secret');
 });
 </script>
