@@ -9,9 +9,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Romer Verify">
 <title>Romer Labs – Etiketten-Verifizierung</title>
-<link id="pwaManifest" rel="manifest">
-<link id="appleTouchIcon" rel="apple-touch-icon">
-<link id="favIcon" rel="icon" type="image/png">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" crossorigin="anonymous"></script>
 <style>
   :root {
@@ -57,7 +58,6 @@
     margin: 0 auto;
   }
 
-  /* Header + Top-Right Camera Button */
   .header {
     display: flex;
     justify-content: space-between;
@@ -147,7 +147,6 @@
     height: 22px;
   }
 
-  /* Active Key Status Strip */
   .key-status-bar {
     display: flex;
     align-items: center;
@@ -199,7 +198,6 @@
     flex-shrink: 0;
   }
 
-  /* Cards & Inputs */
   .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -342,7 +340,6 @@
     padding: 10px;
   }
 
-  /* Result Panel */
   .result {
     display: none;
     margin-top: 16px;
@@ -426,7 +423,6 @@
     font-weight: 600;
   }
 
-  /* Toast Notification */
   .toast {
     position: fixed;
     left: 50%;
@@ -450,7 +446,6 @@
     transform: translateX(-50%) translateY(0);
   }
 
-  /* Fullscreen Mobile QR Scanner Overlay */
   .scanner-modal {
     position: fixed;
     inset: 0;
@@ -674,7 +669,6 @@
 <body>
 
 <div class="container">
-  <!-- Header with DE/EN Switch & Top-Right Camera Icon -->
   <div class="header">
     <div class="brand-wrap">
       <div class="brand-title">Romer Labs Verify</div>
@@ -687,7 +681,6 @@
         <button id="btnEn" class="lang-btn" onclick="setLang('en')">EN</button>
       </div>
 
-      <!-- Top-right Camera Button for Label QR Scan -->
       <button id="btnHeaderCam" class="cam-icon-btn" onclick="openQrScanner('label')" title="Etikett per QR-Code scannen" aria-label="Etikett per QR-Code scannen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -697,10 +690,8 @@
     </div>
   </div>
 
-  <!-- Optional PWA Install Banner -->
   <button id="btnInstallPwa" class="btn-secondary" onclick="installPwa()">📲 App installieren (PWA)</button>
 
-  <!-- Active SecretKey Indicator -->
   <div id="keyStatusBar" class="key-status-bar">
     <div class="key-status-text">
       <span class="key-dot"></span>
@@ -709,7 +700,6 @@
     <button id="btnRescanKeyTop" class="btn-mini-qr" onclick="openQrScanner('secret')">QR-Key</button>
   </div>
 
-  <!-- Main Label Verification Card -->
   <div class="card">
     <div class="field-group">
       <label id="lblReorder" for="reorder">1. REORDER</label>
@@ -740,7 +730,6 @@
     </div>
   </div>
 
-  <!-- SecretKey Management Card -->
   <div class="card">
     <div id="sumSettings" class="section-title">Sicherheitsschlüssel (SecretKey)</div>
     <div class="field-group" style="margin-bottom: 0;">
@@ -760,7 +749,6 @@
   </div>
 </div>
 
-<!-- Fullscreen QR Scanner Modal (Startup SecretKey + Top-Right Label QR) -->
 <div id="scannerModal" class="scanner-modal" role="dialog" aria-modal="true">
   <div class="scanner-inner">
     <div class="scanner-top">
@@ -833,15 +821,17 @@ const I18N = {
     toastKeyScanned: 'SecretKey gescannt und gespeichert!',
     toastLabelScanned: 'Etikettendaten per QR übernommen!',
     printDateLabel: 'Ermitteltes Druckdatum',
-    weekdays: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Szombat'],
+    weekdays: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
     incTitle: 'UNVOLLSTÄNDIGE EINGABE',
     incSub: 'Bitte REORDER, LOT und SEC vollständig eingeben.',
     fmtTitle: 'UNGÜLTIGES SEC-FORMAT',
     fmtSub: 'Erwartetes Format: Counter - XXXX-XXXX (z. B. 5 - 8B14-C09E).',
     valTitle: 'ORIGINAL-ETIKETT (GÜLTIG)',
-    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}\nCounter: ${cnt} | SEC: ${code} (${ms} ms)`,
+    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}
+Counter: ${cnt} | SEC: ${code} (${ms} ms)`,
     invTitle: 'FÄLSCHUNG ODER FEHLER (UNGÜLTIG)',
-    invSub: (r, l, cnt, code) => `Kein passendes Druckdatum (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) gefunden!\n(${r} | ${l} | Counter: ${cnt} | Eingabe: ${code})`,
+    invSub: (r, l, cnt, code) => `Kein passendes Druckdatum (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) gefunden!
+(${r} | ${l} | Counter: ${cnt} | Eingabe: ${code})`,
     scanSecretBadge: 'SCHRITT 1: SECRETKEY',
     scanSecretTitle: 'Sicherheitsschlüssel scannen (QR)',
     scanSecretDesc: 'Scannen Sie den SecretKey-QR-Code. Danach wechselt die App zur manuellen Dateneingabe.',
@@ -889,9 +879,11 @@ const I18N = {
     fmtTitle: 'INVALID SEC FORMAT',
     fmtSub: 'Expected format: Counter - XXXX-XXXX (e.g. 5 - 8B14-C09E).',
     valTitle: 'GENUINE LABEL (VALID)',
-    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}\nCounter: ${cnt} | SEC: ${code} (${ms} ms)`,
+    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}
+Counter: ${cnt} | SEC: ${code} (${ms} ms)`,
     invTitle: 'COUNTERFEIT OR INVALID',
-    invSub: (r, l, cnt, code) => `No matching print date (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) found!\n(${r} | ${l} | Counter: ${cnt} | Input: ${code})`,
+    invSub: (r, l, cnt, code) => `No matching print date (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) found!
+(${r} | ${l} | Counter: ${cnt} | Input: ${code})`,
     scanSecretBadge: 'STEP 1: SECRET KEY',
     scanSecretTitle: 'Scan Secret Key (QR)',
     scanSecretDesc: 'Point the camera at the SecretKey QR code. After scanning, the app switches to manual entry.',
@@ -909,15 +901,11 @@ const I18N = {
   }
 };
 
-// Fix Saturday typo in German weekdays
-I18N.de.weekdays[6] = 'Samstag';
-
 let currentLang = 'de';
 let lastState = null;
 let deferredInstallPrompt = null;
 
-// QR Scanner State
-let scanMode = 'secret'; // 'secret' | 'label'
+let scanMode = 'secret';
 let videoStream = null;
 let scanRafId = null;
 let torchOn = false;
@@ -931,65 +919,10 @@ if ('BarcodeDetector' in window) {
   }
 }
 
-/* ---------- PWA Manifest & Dynamic Icons ---------- */
-function initSingleFilePwa() {
-  try {
-    const createIconDataUrl = (size) => {
-      const c = document.createElement('canvas');
-      c.width = size;
-      c.height = size;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#00685E';
-      ctx.fillRect(0, 0, size, size);
-
-      ctx.strokeStyle = '#2dd4bf';
-      ctx.lineWidth = Math.max(4, Math.round(size * 0.045));
-      const pad = Math.round(size * 0.14);
-      ctx.strokeRect(pad, pad, size - pad * 2, size - pad * 2);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `800 ${Math.round(size * 0.34)}px -apple-system, BlinkMacSystemFont, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('RL', size / 2, size * 0.46);
-
-      ctx.fillStyle = '#2dd4bf';
-      ctx.font = `700 ${Math.round(size * 0.12)}px monospace`;
-      ctx.fillText('VERIFY', size / 2, size * 0.72);
-      return c.toDataURL('image/png');
-    };
-
-    const icon192 = createIconDataUrl(192);
-    const icon512 = createIconDataUrl(512);
-
-    document.getElementById('appleTouchIcon').href = icon192;
-    document.getElementById('favIcon').href = icon192;
-
-    const manifestObj = {
-      name: 'Romer Labs – Etiketten-Verifizierung',
-      short_name: 'Romer Verify',
-      description: 'Offline Etiketten-Prüfung & QR-Scanner',
-      start_url: window.location.href.split('#')[0],
-      display: 'standalone',
-      orientation: 'portrait',
-      background_color: '#0b131e',
-      theme_color: '#00685E',
-      icons: [
-        { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-        { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-      ]
-    };
-
-    const manifestEncoded = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
-    document.getElementById('pwaManifest').setAttribute('href', manifestEncoded);
-
-    if ('caches' in window && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
-      caches.open('romer-verify-pwa-v1').then(cache => {
-        cache.add(window.location.href).catch(() => {});
-      }).catch(() => {});
-    }
-  } catch (e) {
-    // Graceful fallback
+/* ---------- Service Worker Registration ---------- */
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 }
 
@@ -1083,7 +1016,7 @@ function onSecretInput() {
 
 function checkSecretAscii() {
   const val = document.getElementById('secretKey').value;
-  const hasNonAscii = /[^\x00-\x7F]/.test(val);
+  const hasNonAscii = /[^ - ]/.test(val);
   document.getElementById('asciiWarn').style.display = hasNonAscii ? 'block' : 'none';
 }
 
@@ -1321,8 +1254,6 @@ function handleFileQr(event) {
   img.src = objUrl;
 }
 
-// Parse Label URL:
-// https://wdd-plm-romer.dsm-firmenich.com/wdd/?partNumber=[Reorder_1]&lotNumber=[KIT_DATA.LOT]&Secret=[SecurityCounter]-[SecurityCode]
 function parseLabelQrPayload(rawText) {
   const trimmed = rawText.trim();
   let params = null;
@@ -1438,8 +1369,8 @@ function sha256Ascii(ascii) {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
   ];
 
-  ascii += '\x80';
-  while (ascii.length % 64 - 56) ascii += '\x00';
+  ascii += '€';
+  while (ascii.length % 64 - 56) ascii += ' ';
   for (let i = 0; i < ascii.length; i++) {
     const j = ascii.charCodeAt(i) & 0xff;
     words[i >> 2] |= j << ((3 - i) % 4) * 8;
@@ -1621,7 +1552,6 @@ function verifyLabel() {
   renderResult(lastState);
 }
 
-/* ---------- Event Listeners & Startup Flow ---------- */
 ['reorder', 'lot', 'sec'].forEach(id => {
   document.getElementById(id).addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
@@ -1649,7 +1579,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
-  initSingleFilePwa();
+  registerServiceWorker();
 
   const savedKey = localStorage.getItem('romer_sec_key');
   if (savedKey) {
