@@ -1,0 +1,26 @@
+{
+  "name": "Romer Labs – Etiketten-Verifizierung",
+  "short_name": "Romer Verify",
+  "description": "Offline Etiketten-Prüfung, Druckdatum-Ermittlung & QR-Scanner",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b131e",
+  "theme_color": "#00685E",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
