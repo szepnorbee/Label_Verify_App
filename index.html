@@ -13,7 +13,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" crossorigin="anonymous"></script>
+<!-- ZXing UMD supports both DataMatrix and QR Code decoding across all mobile browsers -->
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" crossorigin="anonymous"></script>
 <style>
   :root {
     --bg: #0b131e;
@@ -681,7 +682,7 @@
         <button id="btnEn" class="lang-btn" onclick="setLang('en')">EN</button>
       </div>
 
-      <button id="btnHeaderCam" class="cam-icon-btn" onclick="openQrScanner('label')" title="Etikett per QR-Code scannen" aria-label="Etikett per QR-Code scannen">
+      <button id="btnHeaderCam" class="cam-icon-btn" onclick="openQrScanner('label')" title="Etikett per DataMatrix/QR-Code scannen" aria-label="Etikett per DataMatrix/QR-Code scannen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
           <circle cx="12" cy="13" r="4"></circle>
@@ -697,7 +698,7 @@
       <span class="key-dot"></span>
       <span id="keyStatusLabel">Aktiver Schlüssel: geladen</span>
     </div>
-    <button id="btnRescanKeyTop" class="btn-mini-qr" onclick="openQrScanner('secret')">QR-Key</button>
+    <button id="btnRescanKeyTop" class="btn-mini-qr" onclick="openQrScanner('secret')">Key Scan</button>
   </div>
 
   <div class="card">
@@ -742,7 +743,7 @@
       <div id="hintSecret" class="field-hint">Bitte nur ASCII-Zeichen (Buchstaben ohne Umlaute, Ziffern, Sonderzeichen) verwenden.</div>
     </div>
     <div class="btn-row">
-      <button id="btnScanKeyCard" class="btn-secondary" onclick="openQrScanner('secret')">📷 Key QR</button>
+      <button id="btnScanKeyCard" class="btn-secondary" onclick="openQrScanner('secret')">📷 Key Scan</button>
       <button id="btnSaveKey" class="btn-primary" onclick="saveKey()">Schlüssel speichern</button>
     </div>
     <div id="saveMsg" class="save-msg"></div>
@@ -756,8 +757,8 @@
       <button id="btnCloseScanner" class="btn-close-scan" onclick="switchToManualMode()" aria-label="Schließen">✕</button>
     </div>
 
-    <h2 id="scannerTitle" class="scanner-title">Sicherheitsschlüssel scannen (QR)</h2>
-    <p id="scannerDesc" class="scanner-desc">Scannen Sie den SecretKey-QR-Code. Danach wechselt die App zur manuellen Dateneingabe.</p>
+    <h2 id="scannerTitle" class="scanner-title">Sicherheitsschlüssel scannen (DataMatrix / QR)</h2>
+    <p id="scannerDesc" class="scanner-desc">Scannen Sie den SecretKey-Code (DataMatrix oder QR). Danach wechselt die App zur manuellen Dateneingabe.</p>
 
     <div class="viewport-box">
       <video id="qrVideo" playsinline muted autoplay></video>
@@ -787,7 +788,7 @@
 const SEARCH_START_YEAR = 2025;
 const SEARCH_END_YEAR = 2045;
 
-// QR-URL-Datenstruktur:
+// Code-URL-Datenstruktur:
 // https://wdd-plm-romer.dsm-firmenich.com/wdd/?partNumber=[Reorder_1]&lotNumber=[KIT_DATA.LOT]&Secret=[SecurityCounter]-[SecurityCode]
 let Reorder_1 = '';
 let KIT_DATA = { LOT: '' };
@@ -798,11 +799,11 @@ const I18N = {
   de: {
     pageTitle: 'Romer Labs – Etiketten-Verifizierung',
     subTitle: 'Offline Etiketten-Prüfung & Druckdatum',
-    headerCamTitle: 'Etikett per QR-Code scannen',
+    headerCamTitle: 'Etikett per DataMatrix/QR-Code scannen',
     installPwa: '📲 App installieren (PWA)',
     keyLoaded: (mask) => `Aktiver Schlüssel: ${mask}`,
     keyMissing: 'Kein Sicherheitsschlüssel hinterlegt!',
-    btnRescanKeyTop: 'QR-Key',
+    btnRescanKeyTop: 'Key Scan',
     lblReorder: '1. REORDER',
     lblLot: '2. LOT',
     lblSec: '3. SEC (Counter - Sicherheitscode)',
@@ -813,13 +814,13 @@ const I18N = {
     lblSecret: 'SecretKey (muss mit NiceLabel übereinstimmen)',
     hintSecret: 'Bitte nur ASCII-Zeichen (Buchstaben ohne Umlaute, Ziffern, Sonderzeichen) verwenden.',
     asciiWarn: 'Warnung: Nicht-ASCII-Zeichen (z. B. Umlaute) im SecretKey können zu Abweichungen führen.',
-    btnScanKeyCard: '📷 Key QR',
+    btnScanKeyCard: '📷 Key Scan',
     btnSaveKey: 'Schlüssel speichern',
     btnShow: 'Anzeigen',
     btnHide: 'Verbergen',
     savedMsg: 'Sicherheitsschlüssel wurde lokal gespeichert.',
     toastKeyScanned: 'SecretKey gescannt und gespeichert!',
-    toastLabelScanned: 'Etikettendaten per QR übernommen!',
+    toastLabelScanned: 'Etikettendaten per Code übernommen!',
     printDateLabel: 'Ermitteltes Druckdatum',
     weekdays: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
     incTitle: 'UNVOLLSTÄNDIGE EINGABE',
@@ -827,34 +828,32 @@ const I18N = {
     fmtTitle: 'UNGÜLTIGES SEC-FORMAT',
     fmtSub: 'Erwartetes Format: Counter - XXXX-XXXX (z. B. 5 - 8B14-C09E).',
     valTitle: 'ORIGINAL-ETIKETT (GÜLTIG)',
-    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}
-Counter: ${cnt} | SEC: ${code} (${ms} ms)`,
+    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}\nCounter: ${cnt} | SEC: ${code} (${ms} ms)`,
     invTitle: 'FÄLSCHUNG ODER FEHLER (UNGÜLTIG)',
-    invSub: (r, l, cnt, code) => `Kein passendes Druckdatum (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) gefunden!
-(${r} | ${l} | Counter: ${cnt} | Eingabe: ${code})`,
+    invSub: (r, l, cnt, code) => `Kein passendes Druckdatum (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) gefunden!\n(${r} | ${l} | Counter: ${cnt} | Eingabe: ${code})`,
     scanSecretBadge: 'SCHRITT 1: SECRETKEY',
-    scanSecretTitle: 'Sicherheitsschlüssel scannen (QR)',
-    scanSecretDesc: 'Scannen Sie den SecretKey-QR-Code. Danach wechselt die App zur manuellen Dateneingabe.',
-    scanLabelBadge: 'ETIKETT QR-SCAN',
-    scanLabelTitle: 'Etikettendaten per QR scannen',
-    scanLabelDesc: 'Scannen Sie den QR-Code auf dem Etikett zur automatischen Prüfung.',
+    scanSecretTitle: 'Sicherheitsschlüssel scannen (DataMatrix / QR)',
+    scanSecretDesc: 'Scannen Sie den SecretKey-Code (DataMatrix oder QR). Danach wechselt die App zur manuellen Dateneingabe.',
+    scanLabelBadge: 'ETIKETT CODE-SCAN',
+    scanLabelTitle: 'Etikettendaten scannen (DataMatrix / QR)',
+    scanLabelDesc: 'Scannen Sie den DataMatrix- oder QR-Code auf dem Etikett zur automatischen Prüfung.',
     btnTorch: '🔦 Licht',
     btnPhotoFallback: '🖼️ Aus Bild',
     btnSwitchManual: 'Zur manuellen Eingabe wechseln',
     camStarting: 'Kamera wird gestartet...',
     camDenied: 'Kamerazugriff nicht verfügbar (Berechtigung oder kein HTTPS). Nutzen Sie "Aus Bild" oder "Zur manuellen Eingabe".',
-    errWrongQrForSecret: 'Dies ist ein Etiketten-QR-Code, kein SecretKey! Bitte SecretKey scannen oder manuell fortfahren.',
-    errWrongQrForLabel: 'Ungültiges Etiketten-QR-Format. Erwartet: partNumber, lotNumber und Secret.',
-    errNoQrInImage: 'Kein QR-Code im ausgewählten Bild erkannt.'
+    errWrongQrForSecret: 'Dies ist ein Etiketten-Code, kein SecretKey! Bitte SecretKey scannen oder manuell fortfahren.',
+    errWrongQrForLabel: 'Ungültiges Etiketten-Format. Erwartet: partNumber, lotNumber und Secret.',
+    errNoQrInImage: 'Kein DataMatrix- oder QR-Code im ausgewählten Bild erkannt.'
   },
   en: {
     pageTitle: 'Romer Labs – Label Verification',
     subTitle: 'Offline Label Verification & Print Date',
-    headerCamTitle: 'Scan Label QR Code',
+    headerCamTitle: 'Scan Label DataMatrix / QR Code',
     installPwa: '📲 Install App (PWA)',
     keyLoaded: (mask) => `Active key: ${mask}`,
     keyMissing: 'No secret key configured!',
-    btnRescanKeyTop: 'QR Key',
+    btnRescanKeyTop: 'Key Scan',
     lblReorder: '1. REORDER',
     lblLot: '2. LOT',
     lblSec: '3. SEC (Counter - Security Code)',
@@ -865,13 +864,13 @@ Counter: ${cnt} | SEC: ${code} (${ms} ms)`,
     lblSecret: 'SecretKey (must match NiceLabel script)',
     hintSecret: 'Use standard ASCII characters (letters, digits, symbols) only.',
     asciiWarn: 'Warning: Non-ASCII characters in SecretKey may cause hash mismatches.',
-    btnScanKeyCard: '📷 Key QR',
+    btnScanKeyCard: '📷 Key Scan',
     btnSaveKey: 'Save Key',
     btnShow: 'Show',
     btnHide: 'Hide',
     savedMsg: 'Secret key saved locally in browser.',
     toastKeyScanned: 'SecretKey scanned and saved!',
-    toastLabelScanned: 'Label QR data loaded!',
+    toastLabelScanned: 'Label code data loaded!',
     printDateLabel: 'Recovered Print Date',
     weekdays: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
     incTitle: 'INCOMPLETE DATA',
@@ -879,25 +878,23 @@ Counter: ${cnt} | SEC: ${code} (${ms} ms)`,
     fmtTitle: 'INVALID SEC FORMAT',
     fmtSub: 'Expected format: Counter - XXXX-XXXX (e.g. 5 - 8B14-C09E).',
     valTitle: 'GENUINE LABEL (VALID)',
-    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}
-Counter: ${cnt} | SEC: ${code} (${ms} ms)`,
+    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}\nCounter: ${cnt} | SEC: ${code} (${ms} ms)`,
     invTitle: 'COUNTERFEIT OR INVALID',
-    invSub: (r, l, cnt, code) => `No matching print date (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) found!
-(${r} | ${l} | Counter: ${cnt} | Input: ${code})`,
+    invSub: (r, l, cnt, code) => `No matching print date (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) found!\n(${r} | ${l} | Counter: ${cnt} | Input: ${code})`,
     scanSecretBadge: 'STEP 1: SECRET KEY',
-    scanSecretTitle: 'Scan Secret Key (QR)',
-    scanSecretDesc: 'Point the camera at the SecretKey QR code. After scanning, the app switches to manual entry.',
-    scanLabelBadge: 'LABEL QR SCAN',
-    scanLabelTitle: 'Scan Label Data (QR)',
-    scanLabelDesc: 'Scan the Romer Labs label QR code to auto-fill and verify without typing.',
+    scanSecretTitle: 'Scan Secret Key (DataMatrix / QR)',
+    scanSecretDesc: 'Point the camera at the SecretKey DataMatrix or QR code. After scanning, the app switches to manual entry.',
+    scanLabelBadge: 'LABEL CODE SCAN',
+    scanLabelTitle: 'Scan Label Data (DataMatrix / QR)',
+    scanLabelDesc: 'Scan the Romer Labs label DataMatrix or QR code to auto-fill and verify without typing.',
     btnTorch: '🔦 Torch',
     btnPhotoFallback: '🖼️ From Image',
     btnSwitchManual: 'Switch to manual input',
     camStarting: 'Starting camera...',
     camDenied: 'Camera unavailable (permission denied or non-HTTPS). Use "From Image" or "Switch to manual input".',
-    errWrongQrForSecret: 'This is a product label QR code, not a SecretKey! Scan the SecretKey QR or switch to manual mode.',
-    errWrongQrForLabel: 'Invalid label QR format. Expected partNumber, lotNumber, and Secret parameters.',
-    errNoQrInImage: 'No QR code detected in the selected image.'
+    errWrongQrForSecret: 'This is a product label code, not a SecretKey! Scan the SecretKey code or switch to manual mode.',
+    errWrongQrForLabel: 'Invalid label code format. Expected partNumber, lotNumber, and Secret parameters.',
+    errNoQrInImage: 'No DataMatrix or QR code detected in the selected image.'
   }
 };
 
@@ -907,15 +904,47 @@ let deferredInstallPrompt = null;
 
 let scanMode = 'secret';
 let videoStream = null;
-let scanRafId = null;
+let scanTimerId = null;
+let isDecodingFrame = false;
+let scanFrameCounter = 0;
 let torchOn = false;
 let barcodeDetector = null;
+let zxingReader = null;
 
-if ('BarcodeDetector' in window) {
-  try {
-    barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
-  } catch (e) {
-    barcodeDetector = null;
+/* ---------- Dual Barcode Engine Init (DataMatrix + QR Code) ---------- */
+async function initBarcodeEngines() {
+  // 1. Native BarcodeDetector (supports data_matrix + qr_code on Android Chrome / Edge / macOS)
+  if ('BarcodeDetector' in window) {
+    try {
+      const wanted = ['data_matrix', 'qr_code'];
+      if (typeof BarcodeDetector.getSupportedFormats === 'function') {
+        const supported = await BarcodeDetector.getSupportedFormats();
+        const filtered = wanted.filter(f => supported.includes(f));
+        if (filtered.length > 0) {
+          barcodeDetector = new BarcodeDetector({ formats: filtered });
+        }
+      } else {
+        barcodeDetector = new BarcodeDetector({ formats: wanted });
+      }
+    } catch (e) {
+      barcodeDetector = null;
+    }
+  }
+
+  // 2. ZXing MultiFormatReader (pure-JS DataMatrix + QR fallback for iOS Safari / Firefox / Desktop)
+  if (window.ZXing && window.ZXing.MultiFormatReader) {
+    try {
+      const hints = new Map();
+      hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        window.ZXing.BarcodeFormat.DATA_MATRIX,
+        window.ZXing.BarcodeFormat.QR_CODE
+      ]);
+      hints.set(window.ZXing.DecodeHintType.TRY_HARDER, true);
+      zxingReader = new window.ZXing.MultiFormatReader();
+      zxingReader.setHints(hints);
+    } catch (e) {
+      zxingReader = null;
+    }
   }
 }
 
@@ -1016,7 +1045,7 @@ function onSecretInput() {
 
 function checkSecretAscii() {
   const val = document.getElementById('secretKey').value;
-  const hasNonAscii = /[^ - ]/.test(val);
+  const hasNonAscii = /[^\x00-\x7F]/.test(val);
   document.getElementById('asciiWarn').style.display = hasNonAscii ? 'block' : 'none';
 }
 
@@ -1053,7 +1082,7 @@ function clearFields() {
   document.getElementById('reorder').focus();
 }
 
-/* ---------- QR Scanner & URL Structure Parser ---------- */
+/* ---------- DataMatrix & QR Scanner ---------- */
 function updateScannerLabels() {
   const t = I18N[currentLang];
   if (scanMode === 'secret') {
@@ -1130,6 +1159,8 @@ async function startCameraStream() {
       audio: false
     });
 
+    video.muted = true;
+    video.playsInline = true;
     video.srcObject = videoStream;
     await video.play();
     placeholder.classList.remove('visible');
@@ -1140,9 +1171,13 @@ async function startCameraStream() {
       if (caps && caps.torch) {
         btnTorch.style.display = 'inline-flex';
       }
+      if (caps && Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
+        track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+      }
     }
 
-    scanLoop();
+    scanFrameCounter = 0;
+    scheduleNextScanTick();
   } catch (err) {
     placeholder.classList.add('visible');
     errorText.textContent = I18N[currentLang].camDenied;
@@ -1150,10 +1185,11 @@ async function startCameraStream() {
 }
 
 function stopCameraStream() {
-  if (scanRafId) {
-    cancelAnimationFrame(scanRafId);
-    scanRafId = null;
+  if (scanTimerId) {
+    clearTimeout(scanTimerId);
+    scanTimerId = null;
   }
+  isDecodingFrame = false;
   if (videoStream) {
     videoStream.getTracks().forEach(track => track.stop());
     videoStream = null;
@@ -1178,24 +1214,76 @@ async function toggleTorch() {
   }
 }
 
-async function scanLoop() {
+function scheduleNextScanTick() {
+  const modal = document.getElementById('scannerModal');
+  if (!modal.classList.contains('open')) return;
+  scanTimerId = setTimeout(runScanTick, 90);
+}
+
+async function runScanTick() {
   const modal = document.getElementById('scannerModal');
   if (!modal.classList.contains('open')) return;
 
-  const video = document.getElementById('qrVideo');
-  if (video.readyState === video.HAVE_ENOUGH_DATA) {
-    const decoded = await decodeQrFromSource(video, video.videoWidth, video.videoHeight);
-    if (decoded) {
-      const handled = handleDecodedQr(decoded);
-      if (handled) return;
-    }
+  if (isDecodingFrame) {
+    scheduleNextScanTick();
+    return;
   }
-  scanRafId = requestAnimationFrame(scanLoop);
+
+  const video = document.getElementById('qrVideo');
+  if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
+    isDecodingFrame = true;
+    scanFrameCounter++;
+    try {
+      const decoded = await decodeCodeFromSource(video, video.videoWidth, video.videoHeight, scanFrameCounter);
+      if (decoded) {
+        const handled = handleDecodedCode(decoded);
+        if (handled) {
+          isDecodingFrame = false;
+          return;
+        }
+      }
+    } catch (e) {
+      // Continue scanning
+    }
+    isDecodingFrame = false;
+  }
+
+  scheduleNextScanTick();
 }
 
-async function decodeQrFromSource(source, width, height) {
+function tryZxingOnCanvas(canvas, invert) {
+  if (!zxingReader || !window.ZXing) return null;
+  try {
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    const len = canvas.width * canvas.height;
+    const luminances = new Uint8ClampedArray(len);
+
+    for (let i = 0, j = 0; i < len; i++, j += 4) {
+      // Standard luminance conversion
+      const lum = ((data[j] * 77 + data[j + 1] * 150 + data[j + 2] * 29) >> 8);
+      luminances[i] = invert ? (255 - lum) : lum;
+    }
+
+    const source = new window.ZXing.RGBLuminanceSource(luminances, canvas.width, canvas.height);
+    const binaryBitmap = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(source));
+    const result = zxingReader.decode(binaryBitmap);
+    if (result && typeof result.getText === 'function') {
+      return result.getText();
+    }
+  } catch (e) {
+    // NotFoundException when no code in frame
+  } finally {
+    try { zxingReader.reset(); } catch (e) {}
+  }
+  return null;
+}
+
+async function decodeCodeFromSource(source, width, height, frameIdx = 0) {
   if (!width || !height) return null;
 
+  // 1. Native BarcodeDetector (fast hardware DataMatrix + QR detection)
   if (barcodeDetector) {
     try {
       const codes = await barcodeDetector.detect(source);
@@ -1203,26 +1291,53 @@ async function decodeQrFromSource(source, width, height) {
         return codes[0].rawValue;
       }
     } catch (e) {
-      // Fallback to jsQR
+      // Fallback to ZXing
     }
   }
 
-  if (typeof window.jsQR === 'function') {
+  // 2. ZXing MultiFormatReader (DataMatrix + QR Code)
+  if (zxingReader) {
     const canvas = document.getElementById('qrCanvas');
-    const maxDim = 720;
-    const scale = Math.min(1, maxDim / Math.max(width, height));
-    canvas.width = Math.round(width * scale);
-    canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = window.jsQR(imgData.data, imgData.width, imgData.height, {
-      inversionAttempts: 'dontInvert'
-    });
-    if (code && code.data) {
-      return code.data;
+
+    // Pass A: Center crop at native resolution (ideal for small DataMatrix codes on labels/screens)
+    const minSide = Math.min(width, height);
+    const cropSize = Math.round(minSide * 0.76);
+    const sx = Math.round((width - cropSize) / 2);
+    const sy = Math.round((height - cropSize) / 2);
+    const targetCropDim = Math.min(640, cropSize);
+
+    canvas.width = targetCropDim;
+    canvas.height = targetCropDim;
+    ctx.drawImage(source, sx, sy, cropSize, cropSize, 0, 0, targetCropDim, targetCropDim);
+
+    let text = tryZxingOnCanvas(canvas, false);
+    if (text) return text;
+
+    // Every 3rd frame or on static image: also try inverted colors (white DataMatrix on dark background)
+    if (frameIdx === 0 || frameIdx % 3 === 0) {
+      text = tryZxingOnCanvas(canvas, true);
+      if (text) return text;
+    }
+
+    // Pass B: Full frame (if code is outside center crop)
+    if (frameIdx === 0 || frameIdx % 2 === 0) {
+      const maxDim = 800;
+      const scale = Math.min(1, maxDim / Math.max(width, height));
+      canvas.width = Math.round(width * scale);
+      canvas.height = Math.round(height * scale);
+      ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+      text = tryZxingOnCanvas(canvas, false);
+      if (text) return text;
+
+      if (frameIdx === 0) {
+        text = tryZxingOnCanvas(canvas, true);
+        if (text) return text;
+      }
     }
   }
+
   return null;
 }
 
@@ -1239,10 +1354,10 @@ function handleFileQr(event) {
   const img = new Image();
   const objUrl = URL.createObjectURL(file);
   img.onload = async () => {
-    const decoded = await decodeQrFromSource(img, img.naturalWidth, img.naturalHeight);
+    const decoded = await decodeCodeFromSource(img, img.naturalWidth, img.naturalHeight, 0);
     URL.revokeObjectURL(objUrl);
     if (decoded) {
-      handleDecodedQr(decoded);
+      handleDecodedCode(decoded);
     } else {
       showScannerAlert(I18N[currentLang].errNoQrInImage);
     }
@@ -1294,9 +1409,10 @@ function parseLabelQrPayload(rawText) {
   };
 }
 
-function handleDecodedQr(rawText) {
+function handleDecodedCode(rawText) {
   const t = I18N[currentLang];
-  const cleaned = rawText.trim();
+  // Strip any GS1/control characters (e.g., ASCII 29 Group Separator) and whitespace
+  const cleaned = rawText.replace(/[\x00-\x1F\x7F]/g, '').trim();
   if (!cleaned) return false;
 
   if (scanMode === 'secret') {
@@ -1369,8 +1485,8 @@ function sha256Ascii(ascii) {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
   ];
 
-  ascii += '€';
-  while (ascii.length % 64 - 56) ascii += ' ';
+  ascii += '\x80';
+  while (ascii.length % 64 - 56) ascii += '\x00';
   for (let i = 0; i < ascii.length; i++) {
     const j = ascii.charCodeAt(i) & 0xff;
     words[i >> 2] |= j << ((3 - i) % 4) * 8;
@@ -1578,8 +1694,9 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   registerServiceWorker();
+  await initBarcodeEngines();
 
   const savedKey = localStorage.getItem('romer_sec_key');
   if (savedKey) {
@@ -1591,7 +1708,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const savedLang = localStorage.getItem('romer_verify_lang');
   setLang(savedLang || 'de');
 
-  // Beim Programmstart: SecretKey per Kamera (QR) anfordern
+  // Beim Programmstart: SecretKey per Kamera (DataMatrix / QR) anfordern
   openQrScanner('secret');
 });
 </script>
