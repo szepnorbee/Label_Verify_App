@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#00685E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Romer Verify">
+<title>Romer Labs – Etikett Ellenőrzés (PWA)</title>
+<link id="pwaManifest" rel="manifest">
+<link id="appleTouchIcon" rel="apple-touch-icon">
+<link id="favIcon" rel="icon" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --bg: #0b131e;
+    --card: #131f2e;
+    --input-bg: #091019;
+    --border: #26384d;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --brand: #007a6e;
+    --brand-hover: #008f81;
+    --brand-light: #2dd4bf;
+    --ok-bg: #064e3b;
+    --ok-border: #10b981;
+    --ok-badge: #022c22;
+    --err-bg: #7f1d1d;
+    --err-border: #ef4444;
+    --warn-bg: #78350f;
+    --warn-border: #f59e0b;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+  }
+
+  body {
+    padding: calc(12px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom)) 14px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Header + Top-Right Camera Button */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+
+  .brand-wrap {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .brand-title {
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: var(--brand-light);
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .brand-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .lang-switch {
+    display: flex;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    overflow: hidden;
+  }
+
+  .lang-btn {
+    padding: 7px 8px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.73rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .lang-btn.active {
+    background: var(--brand);
+    color: #ffffff;
+  }
+
+  .cam-icon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    border: 1.5px solid var(--brand-light);
+    background: linear-gradient(135deg, #007a6e 0%, #005c53 100%);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(0, 122, 110, 0.35);
+    transition: transform 0.12s ease, opacity 0.15s ease;
+  }
+
+  .cam-icon-btn:active {
+    transform: scale(0.94);
+    opacity: 0.9;
+  }
+
+  .cam-icon-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Active Key Status Strip */
+  .key-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: rgba(0, 122, 110, 0.14);
+    border: 1px solid rgba(45, 212, 191, 0.35);
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 0.76rem;
+  }
+
+  .key-status-bar.missing {
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(245, 158, 11, 0.45);
+  }
+
+  .key-status-text {
+    color: var(--text);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .key-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--brand-light);
+    flex-shrink: 0;
+  }
+
+  .key-status-bar.missing .key-dot {
+    background: #f59e0b;
+  }
+
+  .btn-mini-qr {
+    padding: 5px 9px;
+    border-radius: 7px;
+    border: 1px solid var(--brand-light);
+    background: var(--input-bg);
+    color: var(--brand-light);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Cards & Inputs */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .field-group {
+    width: 100%;
+    margin-bottom: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    font-size: 16px;
+    font-family: "Consolas", "Courier New", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--brand-light);
+    box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.18);
+  }
+
+  input::placeholder {
+    color: #475569;
+    font-size: 0.92rem;
+  }
+
+  .field-hint {
+    font-size: 0.74rem;
+    color: var(--muted);
+    margin-top: 5px;
+    line-height: 1.35;
+  }
+
+  .ascii-warn {
+    display: none;
+    font-size: 0.75rem;
+    color: #fbbf24;
+    margin-top: 5px;
+    font-weight: 600;
+  }
+
+  .key-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .key-wrap input {
+    flex: 1;
+    text-transform: none;
+  }
+
+  .btn-toggle {
+    padding: 0 12px;
+    min-height: 48px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 50px;
+    padding: 14px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--brand);
+    color: #ffffff;
+  }
+
+  .btn-primary:active {
+    opacity: 0.88;
+  }
+
+  .btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px;
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .btn-row .btn-primary,
+  .btn-row .btn-secondary {
+    margin-top: 0;
+    min-height: 44px;
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+
+  /* Result Panel */
+  .result {
+    display: none;
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid transparent;
+  }
+
+  .result.valid {
+    display: block;
+    background: var(--ok-bg);
+    border-color: var(--ok-border);
+  }
+
+  .result.invalid {
+    display: block;
+    background: var(--err-bg);
+    border-color: var(--err-border);
+  }
+
+  .result.warning {
+    display: block;
+    background: var(--warn-bg);
+    border-color: var(--warn-border);
+  }
+
+  .result-title {
+    font-size: 1.12rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .date-badge {
+    display: none;
+    background: var(--ok-badge);
+    border: 1px solid var(--ok-border);
+    border-radius: 9px;
+    padding: 10px 12px;
+    margin: 8px 0 10px 0;
+  }
+
+  .date-badge-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6ee7b7;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .date-badge-value {
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: #ffffff;
+    font-family: "Consolas", "Courier New", monospace;
+  }
+
+  .result-sub {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    opacity: 0.95;
+    font-family: "Consolas", "Courier New", monospace;
+    white-space: pre-line;
+    word-break: break-word;
+  }
+
+  .section-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--brand-light);
+    margin-bottom: 10px;
+  }
+
+  .save-msg {
+    display: none;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--brand-light);
+    text-align: center;
+    font-weight: 600;
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(100px);
+    background: #064e3b;
+    color: #ecfdf5;
+    border: 1px solid #10b981;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    z-index: 2000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    transition: transform 0.25s ease;
+    max-width: 92vw;
+    text-align: center;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Fullscreen Mobile QR Scanner Overlay */
+  .scanner-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 11, 18, 0.97);
+    z-index: 1500;
+    display: none;
+    flex-direction: column;
+    padding: calc(14px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px;
+    overflow-y: auto;
+  }
+
+  .scanner-modal.open {
+    display: flex;
+  }
+
+  .scanner-inner {
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .scanner-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .scanner-badge {
+    display: inline-block;
+    background: rgba(45, 212, 191, 0.16);
+    border: 1px solid var(--brand-light);
+    color: var(--brand-light);
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 4px 9px;
+    border-radius: 6px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .btn-close-scan {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scanner-title {
+    font-size: 1.12rem;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    color: #ffffff;
+  }
+
+  .scanner-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin: 0 0 14px 0;
+    line-height: 1.4;
+  }
+
+  .viewport-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: 360px;
+    background: #03070c;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #qrVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .scan-frame {
+    position: absolute;
+    width: 68%;
+    height: 68%;
+    border-radius: 14px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+  }
+
+  .scan-frame::before,
+  .scan-frame::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border: 3px solid var(--brand-light);
+    border-radius: 14px;
+  }
+
+  .scan-line {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    height: 2px;
+    background: var(--brand-light);
+    box-shadow: 0 0 10px var(--brand-light);
+    animation: scanAnim 2.2s ease-in-out infinite;
+  }
+
+  @keyframes scanAnim {
+    0%, 100% { top: 10%; }
+    50% { top: 88%; }
+  }
+
+  .cam-placeholder {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    background: #080f18;
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+
+  .cam-placeholder.visible {
+    display: flex;
+  }
+
+  .scanner-alert {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: rgba(127, 29, 29, 0.85);
+    border: 1px solid #ef4444;
+    color: #fecaca;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .scanner-alert.visible {
+    display: block;
+  }
+
+  .scanner-controls {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .scanner-tools-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .btn-tool {
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-tool.active {
+    border-color: var(--brand-light);
+    color: var(--brand-light);
+  }
+
+  .btn-manual-switch {
+    min-height: 48px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--brand-light);
+    background: rgba(0, 122, 110, 0.22);
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  #btnInstallPwa {
+    display: none;
+    margin-bottom: 12px;
+    background: #132a3e;
+    border: 1px solid var(--brand-light);
+    color: var(--brand-light);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header with top-right camera icon -->
+  <div class="header">
+    <div class="brand-wrap">
+      <div class="brand-title">Romer Labs Verify</div>
+      <div id="subTitle" class="brand-sub">Offline Etikett-ellenőrzés &amp; Nyomtatási dátum</div>
+    </div>
+
+    <div class="header-actions">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button id="btnHu" class="lang-btn active" onclick="setLang('hu')">HU</button>
+        <button id="btnDe" class="lang-btn" onclick="setLang('de')">DE</button>
+        <button id="btnEn" class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+
+      <!-- Top-right Camera Button for Label QR Scan -->
+      <button id="btnHeaderCam" class="cam-icon-btn" onclick="openQrScanner('label')" title="Címke QR beolvasása kamerával" aria-label="Címke QR beolvasása kamerával">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+          <circle cx="12" cy="13" r="4"></circle>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Optional PWA Install Banner -->
+  <button id="btnInstallPwa" class="btn-secondary" onclick="installPwa()">📲 Alkalmazás telepítése (PWA)</button>
+
+  <!-- Active SecretKey Indicator -->
+  <div id="keyStatusBar" class="key-status-bar">
+    <div class="key-status-text">
+      <span class="key-dot"></span>
+      <span id="keyStatusLabel">Aktív kulcs: betöltve</span>
+    </div>
+    <button id="btnRescanKeyTop" class="btn-mini-qr" onclick="openQrScanner('secret')">QR Kulcs</button>
+  </div>
+
+  <!-- Main Label Verification Card -->
+  <div class="card">
+    <div class="field-group">
+      <label id="lblReorder" for="reorder">1. REORDER (Cikkszám)</label>
+      <input id="reorder" type="text" placeholder="10006320" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="field-group">
+      <label id="lblLot" for="lot">2. LOT (Gyártási tétel)</label>
+      <input id="lot" type="text" placeholder="1000632043" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="field-group">
+      <label id="lblSec" for="sec">3. SEC (Counter - Biztonsági kód)</label>
+      <input id="sec" type="text" placeholder="5 - 8B14-C09E" autocomplete="off" spellcheck="false">
+      <div id="hintSec" class="field-hint">Formátum a címkén: [Counter] - [XXXX-XXXX], pl. 5 - 8B14-C09E</div>
+    </div>
+
+    <button id="btnVerify" class="btn-primary" onclick="verifyLabel()">Etikett ellenőrzése</button>
+    <button id="btnClear" class="btn-secondary" onclick="clearFields()">Mezők törlése</button>
+
+    <div id="resultBox" class="result">
+      <div id="resultTitle" class="result-title"></div>
+      <div id="dateBadge" class="date-badge">
+        <div id="dateBadgeLabel" class="date-badge-label"></div>
+        <div id="dateBadgeValue" class="date-badge-value"></div>
+      </div>
+      <div id="resultSub" class="result-sub"></div>
+    </div>
+  </div>
+
+  <!-- SecretKey Management Card -->
+  <div class="card">
+    <div id="sumSettings" class="section-title">Titkosító kulcs (SecretKey)</div>
+    <div class="field-group" style="margin-bottom: 0;">
+      <label id="lblSecret" for="secretKey">SecretKey (egyeznie kell a NiceLabel kulccsal)</label>
+      <div class="key-wrap">
+        <input id="secretKey" type="password" value="Romer2026!#SecSalt" autocomplete="off" spellcheck="false" oninput="onSecretInput()">
+        <button id="btnToggleKey" type="button" class="btn-toggle" onclick="toggleKeyVisibility()">Mutat</button>
+      </div>
+      <div id="asciiWarn" class="ascii-warn"></div>
+      <div id="hintSecret" class="field-hint">Csak szabványos ASCII karaktereket (ékezet nélküli betűk, számok, jelek) használj.</div>
+    </div>
+    <div class="btn-row">
+      <button id="btnScanKeyCard" class="btn-secondary" onclick="openQrScanner('secret')">📷 Kulcs QR</button>
+      <button id="btnSaveKey" class="btn-primary" onclick="saveKey()">Kulcs mentése</button>
+    </div>
+    <div id="saveMsg" class="save-msg"></div>
+  </div>
+</div>
+
+<!-- Fullscreen QR Scanner Modal (Startup SecretKey + Top-Right Label QR) -->
+<div id="scannerModal" class="scanner-modal" role="dialog" aria-modal="true">
+  <div class="scanner-inner">
+    <div class="scanner-top">
+      <span id="scannerModeBadge" class="scanner-badge">1. LÉPÉS: TITKOSÍTÓ KULCS</span>
+      <button id="btnCloseScanner" class="btn-close-scan" onclick="switchToManualMode()" aria-label="Bezárás">✕</button>
+    </div>
+
+    <h2 id="scannerTitle" class="scanner-title">Titkosító kulcs beolvasása (QR)</h2>
+    <p id="scannerDesc" class="scanner-desc">Irányítsd a kamerát a SecretKey QR-kódra. Beolvasás után a program automatikusan manuális adatbevitelre vált.</p>
+
+    <div class="viewport-box">
+      <video id="qrVideo" playsinline muted autoplay></video>
+      <div class="scan-frame"><div class="scan-line"></div></div>
+      <div id="camPlaceholder" class="cam-placeholder">
+        <div id="camErrorText">Kamera indítása folyamatban...</div>
+      </div>
+    </div>
+
+    <div id="scannerAlert" class="scanner-alert"></div>
+
+    <div class="scanner-controls">
+      <div class="scanner-tools-row">
+        <button id="btnTorch" type="button" class="btn-tool" onclick="toggleTorch()" style="display:none;">🔦 Vaku</button>
+        <button id="btnPhotoFallback" type="button" class="btn-tool" onclick="triggerPhotoScan()">🖼️ QR képből</button>
+      </div>
+      <button id="btnSwitchManual" type="button" class="btn-manual-switch" onclick="switchToManualMode()">Váltás manuális bevitelre</button>
+    </div>
+    <input id="qrFileInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleFileQr(event)">
+  </div>
+</div>
+
+<canvas id="qrCanvas" style="display:none;"></canvas>
+<div id="toast" class="toast"></div>
+
+<script>
+const SEARCH_START_YEAR = 2025;
+const SEARCH_END_YEAR = 2045;
+
+// QR URL adatszerkezet változói:
+// https://wdd-plm-romer.dsm-firmenich.com/wdd/?partNumber=[Reorder_1]&lotNumber=[KIT_DATA.LOT]&Secret=[SecurityCounter]-[SecurityCode]
+let Reorder_1 = '';
+let KIT_DATA = { LOT: '' };
+let SecurityCounter = '';
+let SecurityCode = '';
+
+const I18N = {
+  hu: {
+    pageTitle: 'Romer Labs – Etikett Ellenőrzés',
+    subTitle: 'Offline Etikett-ellenőrzés & Nyomtatási dátum',
+    headerCamTitle: 'Címke QR beolvasása kamerával',
+    installPwa: '📲 Alkalmazás telepítése (PWA)',
+    keyLoaded: (mask) => `Aktív kulcs: ${mask}`,
+    keyMissing: 'Nincs titkosító kulcs megadva!',
+    btnRescanKeyTop: 'QR Kulcs',
+    lblReorder: '1. REORDER (Cikkszám)',
+    lblLot: '2. LOT (Gyártási tétel)',
+    lblSec: '3. SEC (Counter - Biztonsági kód)',
+    hintSec: 'Formátum a címkén: [Counter] - [XXXX-XXXX], pl. 5 - 8B14-C09E',
+    btnVerify: 'Etikett ellenőrzése',
+    btnClear: 'Mezők törlése',
+    sumSettings: 'Titkosító kulcs (SecretKey)',
+    lblSecret: 'SecretKey (egyeznie kell a NiceLabel kulccsal)',
+    hintSecret: 'Csak szabványos ASCII karaktereket (ékezet nélküli betűk, számok, jelek) használj.',
+    asciiWarn: 'Figyelem: A nem ASCII karakterek (pl. ékezetek) eltérő hash-t eredményezhetnek.',
+    btnScanKeyCard: '📷 Kulcs QR',
+    btnSaveKey: 'Kulcs mentése',
+    btnShow: 'Mutat',
+    btnHide: 'Elrejt',
+    savedMsg: 'Titkosító kulcs elmentve a készülékre.',
+    toastKeyScanned: 'Titkosító kulcs beolvasva és elmentve!',
+    toastLabelScanned: 'Címke QR adatok beolvasva!',
+    printDateLabel: 'Visszafejtett nyomtatási dátum',
+    weekdays: ['Vasárnap', 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat'],
+    incTitle: 'HIÁNYOS ADATOK',
+    incSub: 'Kérlek add meg a REORDER, LOT és SEC értékeket.',
+    fmtTitle: 'ÉRVÉNYTELEN SEC FORMÁTUM',
+    fmtSub: 'Elvárt formátum: Counter - XXXX-XXXX (pl. 5 - 8B14-C09E).',
+    valTitle: 'EREDETI ETIKETT (ÉRVÉNYES)',
+    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}\nCounter: ${cnt} | SEC: ${code} (${ms} ms)`,
+    invTitle: 'HAMISÍTVÁNY VAGY HIBA (ÉRVÉNYTELEN)',
+    invSub: (r, l, cnt, code) => `Nem található egyező nyomtatási dátum (${SEARCH_START_YEAR}–${SEARCH_END_YEAR})!\n(${r} | ${l} | Counter: ${cnt} | Megadva: ${code})`,
+    scanSecretBadge: '1. LÉPÉS: TITKOSÍTÓ KULCS',
+    scanSecretTitle: 'Titkosító kulcs beolvasása (QR)',
+    scanSecretDesc: 'Olvasd be kamerával a SecretKey QR-kódot. Beolvasás után a program manuális adatbevitelre vált.',
+    scanLabelBadge: 'CÍMKE QR BEOLVASÁS',
+    scanLabelTitle: 'Etikett adatok beolvasása (QR)',
+    scanLabelDesc: 'Olvasd be a Romer Labs címke QR-kódját a mezők automatikus kitöltéséhez és ellenőrzéséhez.',
+    btnTorch: '🔦 Vaku',
+    btnPhotoFallback: '🖼️ QR képből',
+    btnSwitchManual: 'Váltás manuális bevitelre',
+    camStarting: 'Kamera indítása...',
+    camDenied: 'A kamera nem érhető el (engedély megtagadva vagy nem HTTPS kapcsolat). Használd a "QR képből" vagy a "Váltás manuális bevitelre" gombot.',
+    errWrongQrForSecret: 'Ez egy termékcímke QR-kódja, nem a titkosító kulcs! Olvasd be a SecretKey QR-kódot, vagy válts manuális bevitelre.',
+    errWrongQrForLabel: 'Érvénytelen címke QR-formátum. Elvárt paraméterek: partNumber, lotNumber és Secret.',
+    errNoQrInImage: 'Nem található felismerhető QR-kód a kiválasztott képen.'
+  },
+  de: {
+    pageTitle: 'Romer Labs – Etiketten-Verifizierung',
+    subTitle: 'Offline Etiketten-Prüfung & Druckdatum',
+    headerCamTitle: 'Etikett per QR-Code scannen',
+    installPwa: '📲 App installieren (PWA)',
+    keyLoaded: (mask) => `Aktiver Schlüssel: ${mask}`,
+    keyMissing: 'Kein Sicherheitsschlüssel hinterlegt!',
+    btnRescanKeyTop: 'QR-Key',
+    lblReorder: '1. REORDER',
+    lblLot: '2. LOT',
+    lblSec: '3. SEC (Counter - Sicherheitscode)',
+    hintSec: 'Format auf dem Etikett: [Counter] - [XXXX-XXXX], z. B. 5 - 8B14-C09E',
+    btnVerify: 'Etikett prüfen',
+    btnClear: 'Felder löschen',
+    sumSettings: 'Sicherheitsschlüssel (SecretKey)',
+    lblSecret: 'SecretKey (muss mit NiceLabel übereinstimmen)',
+    hintSecret: 'Bitte nur ASCII-Zeichen (Buchstaben ohne Umlaute, Ziffern, Sonderzeichen) verwenden.',
+    asciiWarn: 'Warnung: Nicht-ASCII-Zeichen (z. B. Umlaute) im SecretKey können zu Abweichungen führen.',
+    btnScanKeyCard: '📷 Key QR',
+    btnSaveKey: 'Schlüssel speichern',
+    btnShow: 'Anzeigen',
+    btnHide: 'Verbergen',
+    savedMsg: 'Sicherheitsschlüssel wurde lokal gespeichert.',
+    toastKeyScanned: 'SecretKey gescannt und gespeichert!',
+    toastLabelScanned: 'Etikettendaten per QR übernommen!',
+    printDateLabel: 'Ermitteltes Druckdatum',
+    weekdays: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
+    incTitle: 'UNVOLLSTÄNDIGE EINGABE',
+    incSub: 'Bitte REORDER, LOT und SEC vollständig eingeben.',
+    fmtTitle: 'UNGÜLTIGES SEC-FORMAT',
+    fmtSub: 'Erwartetes Format: Counter - XXXX-XXXX (z. B. 5 - 8B14-C09E).',
+    valTitle: 'ORIGINAL-ETIKETT (GÜLTIG)',
+    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}\nCounter: ${cnt} | SEC: ${code} (${ms} ms)`,
+    invTitle: 'FÄLSCHUNG ODER FEHLER (UNGÜLTIG)',
+    invSub: (r, l, cnt, code) => `Kein passendes Druckdatum (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) gefunden!\n(${r} | ${l} | Counter: ${cnt} | Eingabe: ${code})`,
+    scanSecretBadge: 'SCHRITT 1: SECRETKEY',
+    scanSecretTitle: 'Sicherheitsschlüssel scannen (QR)',
+    scanSecretDesc: 'Scannen Sie den SecretKey-QR-Code. Danach wechselt die App zur manuellen Dateneingabe.',
+    scanLabelBadge: 'ETIKETT QR-SCAN',
+    scanLabelTitle: 'Etikettendaten per QR scannen',
+    scanLabelDesc: 'Scannen Sie den QR-Code auf dem Etikett zur automatischen Prüfung.',
+    btnTorch: '🔦 Licht',
+    btnPhotoFallback: '🖼️ Aus Bild',
+    btnSwitchManual: 'Zur manuellen Eingabe wechseln',
+    camStarting: 'Kamera wird gestartet...',
+    camDenied: 'Kamerazugriff nicht verfügbar (Berechtigung oder kein HTTPS). Nutzen Sie "Aus Bild" oder "Zur manuellen Eingabe".',
+    errWrongQrForSecret: 'Dies ist ein Etiketten-QR-Code, kein SecretKey! Bitte SecretKey scannen oder manuell fortfahren.',
+    errWrongQrForLabel: 'Ungültiges Etiketten-QR-Format. Erwartet: partNumber, lotNumber und Secret.',
+    errNoQrInImage: 'Kein QR-Code im ausgewählten Bild erkannt.'
+  },
+  en: {
+    pageTitle: 'Romer Labs – Label Verification',
+    subTitle: 'Offline Label Verification & Print Date',
+    headerCamTitle: 'Scan Label QR Code',
+    installPwa: '📲 Install App (PWA)',
+    keyLoaded: (mask) => `Active key: ${mask}`,
+    keyMissing: 'No secret key configured!',
+    btnRescanKeyTop: 'QR Key',
+    lblReorder: '1. REORDER',
+    lblLot: '2. LOT',
+    lblSec: '3. SEC (Counter - Security Code)',
+    hintSec: 'Format on label: [Counter] - [XXXX-XXXX], e.g. 5 - 8B14-C09E',
+    btnVerify: 'Verify Label',
+    btnClear: 'Clear Fields',
+    sumSettings: 'Secret Key Configuration',
+    lblSecret: 'SecretKey (must match NiceLabel script)',
+    hintSecret: 'Use standard ASCII characters (letters, digits, symbols) only.',
+    asciiWarn: 'Warning: Non-ASCII characters in SecretKey may cause hash mismatches.',
+    btnScanKeyCard: '📷 Key QR',
+    btnSaveKey: 'Save Key',
+    btnShow: 'Show',
+    btnHide: 'Hide',
+    savedMsg: 'Secret key saved locally in browser.',
+    toastKeyScanned: 'SecretKey scanned and saved!',
+    toastLabelScanned: 'Label QR data loaded!',
+    printDateLabel: 'Recovered Print Date',
+    weekdays: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    incTitle: 'INCOMPLETE DATA',
+    incSub: 'Please enter REORDER, LOT, and SEC completely.',
+    fmtTitle: 'INVALID SEC FORMAT',
+    fmtSub: 'Expected format: Counter - XXXX-XXXX (e.g. 5 - 8B14-C09E).',
+    valTitle: 'GENUINE LABEL (VALID)',
+    valSub: (r, l, cnt, code, ms) => `REORDER: ${r} | LOT: ${l}\nCounter: ${cnt} | SEC: ${code} (${ms} ms)`,
+    invTitle: 'COUNTERFEIT OR INVALID',
+    invSub: (r, l, cnt, code) => `No matching print date (${SEARCH_START_YEAR}–${SEARCH_END_YEAR}) found!\n(${r} | ${l} | Counter: ${cnt} | Input: ${code})`,
+    scanSecretBadge: 'STEP 1: SECRET KEY',
+    scanSecretTitle: 'Scan Secret Key (QR)',
+    scanSecretDesc: 'Point the camera at the SecretKey QR code. After scanning, the app switches to manual entry.',
+    scanLabelBadge: 'LABEL QR SCAN',
+    scanLabelTitle: 'Scan Label Data (QR)',
+    scanLabelDesc: 'Scan the Romer Labs label QR code to auto-fill and verify without typing.',
+    btnTorch: '🔦 Torch',
+    btnPhotoFallback: '🖼️ From Image',
+    btnSwitchManual: 'Switch to manual input',
+    camStarting: 'Starting camera...',
+    camDenied: 'Camera unavailable (permission denied or non-HTTPS). Use "From Image" or "Switch to manual input".',
+    errWrongQrForSecret: 'This is a product label QR code, not a SecretKey! Scan the SecretKey QR or switch to manual mode.',
+    errWrongQrForLabel: 'Invalid label QR format. Expected partNumber, lotNumber, and Secret parameters.',
+    errNoQrInImage: 'No QR code detected in the selected image.'
+  }
+};
+
+let currentLang = 'hu';
+let lastState = null;
+let deferredInstallPrompt = null;
+
+// QR Scanner State
+let scanMode = 'secret'; // 'secret' | 'label'
+let videoStream = null;
+let scanRafId = null;
+let torchOn = false;
+let barcodeDetector = null;
+
+if ('BarcodeDetector' in window) {
+  try {
+    barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+  } catch (e) {
+    barcodeDetector = null;
+  }
+}
+
+/* ---------- PWA Manifest & Dynamic Icons ---------- */
+function initSingleFilePwa() {
+  try {
+    const createIconDataUrl = (size) => {
+      const c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#00685E';
+      ctx.fillRect(0, 0, size, size);
+
+      ctx.strokeStyle = '#2dd4bf';
+      ctx.lineWidth = Math.max(4, Math.round(size * 0.045));
+      const pad = Math.round(size * 0.14);
+      ctx.strokeRect(pad, pad, size - pad * 2, size - pad * 2);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `800 ${Math.round(size * 0.34)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('RL', size / 2, size * 0.46);
+
+      ctx.fillStyle = '#2dd4bf';
+      ctx.font = `700 ${Math.round(size * 0.12)}px monospace`;
+      ctx.fillText('VERIFY', size / 2, size * 0.72);
+      return c.toDataURL('image/png');
+    };
+
+    const icon192 = createIconDataUrl(192);
+    const icon512 = createIconDataUrl(512);
+
+    document.getElementById('appleTouchIcon').href = icon192;
+    document.getElementById('favIcon').href = icon192;
+
+    const manifestObj = {
+      name: 'Romer Labs – Label Verify',
+      short_name: 'Romer Verify',
+      description: 'Offline Romer Labs Label Verification & QR Scanner',
+      start_url: window.location.href.split('#')[0],
+      display: 'standalone',
+      orientation: 'portrait',
+      background_color: '#0b131e',
+      theme_color: '#00685E',
+      icons: [
+        { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+        { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+      ]
+    };
+
+    const manifestEncoded = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
+    document.getElementById('pwaManifest').setAttribute('href', manifestEncoded);
+
+    // Offline cache snapshot via CacheStorage API
+    if ('caches' in window && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+      caches.open('romer-verify-pwa-v1').then(cache => {
+        cache.add(window.location.href).catch(() => {});
+      }).catch(() => {});
+    }
+  } catch (e) {
+    // Graceful fallback
+  }
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('btnInstallPwa').style.display = 'flex';
+});
+
+async function installPwa() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById('btnInstallPwa').style.display = 'none';
+}
+
+/* ---------- Language & UI Helpers ---------- */
+function setLang(lang) {
+  currentLang = I18N[lang] ? lang : 'hu';
+  localStorage.setItem('romer_verify_lang', currentLang);
+  document.documentElement.lang = currentLang;
+
+  const t = I18N[currentLang];
+  document.title = t.pageTitle;
+  document.getElementById('subTitle').textContent = t.subTitle;
+  document.getElementById('btnHeaderCam').title = t.headerCamTitle;
+  document.getElementById('btnHeaderCam').setAttribute('aria-label', t.headerCamTitle);
+  document.getElementById('btnInstallPwa').textContent = t.installPwa;
+  document.getElementById('btnRescanKeyTop').textContent = t.btnRescanKeyTop;
+  document.getElementById('lblReorder').textContent = t.lblReorder;
+  document.getElementById('lblLot').textContent = t.lblLot;
+  document.getElementById('lblSec').textContent = t.lblSec;
+  document.getElementById('hintSec').textContent = t.hintSec;
+  document.getElementById('btnVerify').textContent = t.btnVerify;
+  document.getElementById('btnClear').textContent = t.btnClear;
+  document.getElementById('sumSettings').textContent = t.sumSettings;
+  document.getElementById('lblSecret').textContent = t.lblSecret;
+  document.getElementById('hintSecret').textContent = t.hintSecret;
+  document.getElementById('asciiWarn').textContent = t.asciiWarn;
+  document.getElementById('btnScanKeyCard').textContent = t.btnScanKeyCard;
+  document.getElementById('btnSaveKey').textContent = t.btnSaveKey;
+  document.getElementById('btnTorch').textContent = t.btnTorch;
+  document.getElementById('btnPhotoFallback').textContent = t.btnPhotoFallback;
+  document.getElementById('btnSwitchManual').textContent = t.btnSwitchManual;
+
+  const keyInput = document.getElementById('secretKey');
+  document.getElementById('btnToggleKey').textContent = keyInput.type === 'password' ? t.btnShow : t.btnHide;
+
+  document.getElementById('btnHu').classList.toggle('active', currentLang === 'hu');
+  document.getElementById('btnDe').classList.toggle('active', currentLang === 'de');
+  document.getElementById('btnEn').classList.toggle('active', currentLang === 'en');
+
+  updateScannerLabels();
+  updateKeyStatusBar();
+
+  if (lastState) {
+    renderResult(lastState);
+  }
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function updateKeyStatusBar() {
+  const t = I18N[currentLang];
+  const val = document.getElementById('secretKey').value;
+  const bar = document.getElementById('keyStatusBar');
+  const lbl = document.getElementById('keyStatusLabel');
+
+  if (!val) {
+    bar.classList.add('missing');
+    lbl.textContent = t.keyMissing;
+  } else {
+    bar.classList.remove('missing');
+    const masked = val.length <= 6
+      ? '••••••'
+      : `${val.slice(0, 3)}••••${val.slice(-3)}`;
+    lbl.textContent = t.keyLoaded(masked);
+  }
+}
+
+function onSecretInput() {
+  checkSecretAscii();
+  updateKeyStatusBar();
+}
+
+function checkSecretAscii() {
+  const val = document.getElementById('secretKey').value;
+  const hasNonAscii = /[^\x00-\x7F]/.test(val);
+  document.getElementById('asciiWarn').style.display = hasNonAscii ? 'block' : 'none';
+}
+
+function toggleKeyVisibility() {
+  const keyInput = document.getElementById('secretKey');
+  const t = I18N[currentLang];
+  if (keyInput.type === 'password') {
+    keyInput.type = 'text';
+    document.getElementById('btnToggleKey').textContent = t.btnHide;
+  } else {
+    keyInput.type = 'password';
+    document.getElementById('btnToggleKey').textContent = t.btnShow;
+  }
+}
+
+function saveKey() {
+  localStorage.setItem('romer_sec_key', document.getElementById('secretKey').value);
+  updateKeyStatusBar();
+  const msg = document.getElementById('saveMsg');
+  msg.textContent = I18N[currentLang].savedMsg;
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display = 'none'; }, 2500);
+}
+
+function clearFields() {
+  Reorder_1 = '';
+  KIT_DATA = { LOT: '' };
+  SecurityCounter = '';
+  SecurityCode = '';
+  ['reorder', 'lot', 'sec'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('resultBox').className = 'result';
+  document.getElementById('dateBadge').style.display = 'none';
+  lastState = null;
+  document.getElementById('reorder').focus();
+}
+
+/* ---------- QR Scanner & URL Structure Parser ---------- */
+function updateScannerLabels() {
+  const t = I18N[currentLang];
+  if (scanMode === 'secret') {
+    document.getElementById('scannerModeBadge').textContent = t.scanSecretBadge;
+    document.getElementById('scannerTitle').textContent = t.scanSecretTitle;
+    document.getElementById('scannerDesc').textContent = t.scanSecretDesc;
+  } else {
+    document.getElementById('scannerModeBadge').textContent = t.scanLabelBadge;
+    document.getElementById('scannerTitle').textContent = t.scanLabelTitle;
+    document.getElementById('scannerDesc').textContent = t.scanLabelDesc;
+  }
+}
+
+function showScannerAlert(msg) {
+  const alertEl = document.getElementById('scannerAlert');
+  if (!msg) {
+    alertEl.classList.remove('visible');
+    alertEl.textContent = '';
+  } else {
+    alertEl.textContent = msg;
+    alertEl.classList.add('visible');
+  }
+}
+
+async function openQrScanner(mode) {
+  scanMode = mode || 'label';
+  updateScannerLabels();
+  showScannerAlert('');
+
+  const modal = document.getElementById('scannerModal');
+  const placeholder = document.getElementById('camPlaceholder');
+  const errorText = document.getElementById('camErrorText');
+
+  modal.classList.add('open');
+  placeholder.classList.add('visible');
+  errorText.textContent = I18N[currentLang].camStarting;
+
+  await startCameraStream();
+}
+
+function switchToManualMode() {
+  stopCameraStream();
+  document.getElementById('scannerModal').classList.remove('open');
+  showScannerAlert('');
+  setTimeout(() => {
+    const reorderEl = document.getElementById('reorder');
+    if (!reorderEl.value) reorderEl.focus();
+  }, 80);
+}
+
+async function startCameraStream() {
+  stopCameraStream();
+  const video = document.getElementById('qrVideo');
+  const placeholder = document.getElementById('camPlaceholder');
+  const errorText = document.getElementById('camErrorText');
+  const btnTorch = document.getElementById('btnTorch');
+  btnTorch.style.display = 'none';
+  torchOn = false;
+  btnTorch.classList.remove('active');
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    placeholder.classList.add('visible');
+    errorText.textContent = I18N[currentLang].camDenied;
+    return;
+  }
+
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+
+    video.srcObject = videoStream;
+    await video.play();
+    placeholder.classList.remove('visible');
+
+    // Check Torch availability
+    const track = videoStream.getVideoTracks()[0];
+    if (track && typeof track.getCapabilities === 'function') {
+      const caps = track.getCapabilities();
+      if (caps && caps.torch) {
+        btnTorch.style.display = 'inline-flex';
+      }
+    }
+
+    scanLoop();
+  } catch (err) {
+    placeholder.classList.add('visible');
+    errorText.textContent = I18N[currentLang].camDenied;
+  }
+}
+
+function stopCameraStream() {
+  if (scanRafId) {
+    cancelAnimationFrame(scanRafId);
+    scanRafId = null;
+  }
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => track.stop());
+    videoStream = null;
+  }
+  const video = document.getElementById('qrVideo');
+  if (video) {
+    video.pause();
+    video.srcObject = null;
+  }
+}
+
+async function toggleTorch() {
+  if (!videoStream) return;
+  const track = videoStream.getVideoTracks()[0];
+  if (!track) return;
+  try {
+    torchOn = !torchOn;
+    await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+    document.getElementById('btnTorch').classList.toggle('active', torchOn);
+  } catch (e) {
+    torchOn = false;
+  }
+}
+
+async function scanLoop() {
+  const modal = document.getElementById('scannerModal');
+  if (!modal.classList.contains('open')) return;
+
+  const video = document.getElementById('qrVideo');
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const decoded = await decodeQrFromSource(video, video.videoWidth, video.videoHeight);
+    if (decoded) {
+      const handled = handleDecodedQr(decoded);
+      if (handled) return;
+    }
+  }
+  scanRafId = requestAnimationFrame(scanLoop);
+}
+
+async function decodeQrFromSource(source, width, height) {
+  if (!width || !height) return null;
+
+  // 1. Native BarcodeDetector
+  if (barcodeDetector) {
+    try {
+      const codes = await barcodeDetector.detect(source);
+      if (codes && codes.length > 0 && codes[0].rawValue) {
+        return codes[0].rawValue;
+      }
+    } catch (e) {
+      // Fallback to jsQR
+    }
+  }
+
+  // 2. Pure-JS jsQR fallback (iOS Safari / Firefox)
+  if (typeof window.jsQR === 'function') {
+    const canvas = document.getElementById('qrCanvas');
+    const maxDim = 720;
+    const scale = Math.min(1, maxDim / Math.max(width, height));
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = window.jsQR(imgData.data, imgData.width, imgData.height, {
+      inversionAttempts: 'dontInvert'
+    });
+    if (code && code.data) {
+      return code.data;
+    }
+  }
+  return null;
+}
+
+function triggerPhotoScan() {
+  const input = document.getElementById('qrFileInput');
+  input.value = '';
+  input.click();
+}
+
+function handleFileQr(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const img = new Image();
+  const objUrl = URL.createObjectURL(file);
+  img.onload = async () => {
+    const decoded = await decodeQrFromSource(img, img.naturalWidth, img.naturalHeight);
+    URL.revokeObjectURL(objUrl);
+    if (decoded) {
+      handleDecodedQr(decoded);
+    } else {
+      showScannerAlert(I18N[currentLang].errNoQrInImage);
+    }
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(objUrl);
+    showScannerAlert(I18N[currentLang].errNoQrInImage);
+  };
+  img.src = objUrl;
+}
+
+// Parse Label URL:
+// https://wdd-plm-romer.dsm-firmenich.com/wdd/?partNumber=[Reorder_1]&lotNumber=[KIT_DATA.LOT]&Secret=[SecurityCounter]-[SecurityCode]
+function parseLabelQrPayload(rawText) {
+  const trimmed = rawText.trim();
+  let params = null;
+
+  try {
+    const urlObj = new URL(trimmed);
+    params = urlObj.searchParams;
+  } catch (e) {
+    if (trimmed.includes('partNumber=') || trimmed.includes('lotNumber=')) {
+      const qPart = trimmed.includes('?') ? trimmed.split('?')[1] : trimmed;
+      params = new URLSearchParams(qPart);
+    }
+  }
+
+  if (!params) return null;
+
+  // Case-insensitive parameter lookup
+  let partNum = '';
+  let lotNum = '';
+  let secretFull = '';
+
+  for (const [k, v] of params.entries()) {
+    const kl = k.toLowerCase();
+    if (kl === 'partnumber') partNum = v.trim().toUpperCase();
+    else if (kl === 'lotnumber') lotNum = v.trim().toUpperCase();
+    else if (kl === 'secret') secretFull = v.trim();
+  }
+
+  if (!partNum || !lotNum || !secretFull) return null;
+
+  const parsedSec = parseSecInput(secretFull);
+  if (!parsedSec) return null;
+
+  return {
+    Reorder_1: partNum,
+    KIT_DATA: { LOT: lotNum },
+    SecurityCounter: parsedSec.counter,
+    SecurityCode: parsedSec.code
+  };
+}
+
+function handleDecodedQr(rawText) {
+  const t = I18N[currentLang];
+  const cleaned = rawText.trim();
+  if (!cleaned) return false;
+
+  if (scanMode === 'secret') {
+    // Reject label URLs when expecting the SecretKey
+    if (parseLabelQrPayload(cleaned) || /wdd-plm-romer\.dsm-firmenich\.com/i.test(cleaned)) {
+      showScannerAlert(t.errWrongQrForSecret);
+      return false;
+    }
+
+    // Store scanned SecretKey, persist locally, and switch to manual entry view
+    const keyInput = document.getElementById('secretKey');
+    keyInput.value = cleaned;
+    localStorage.setItem('romer_sec_key', cleaned);
+    checkSecretAscii();
+    updateKeyStatusBar();
+
+    if (navigator.vibrate) navigator.vibrate(80);
+    switchToManualMode();
+    showToast(t.toastKeyScanned);
+    return true;
+  }
+
+  if (scanMode === 'label') {
+    const parsed = parseLabelQrPayload(cleaned);
+    if (!parsed) {
+      showScannerAlert(t.errWrongQrForLabel);
+      return false;
+    }
+
+    // Populate variables & inputs
+    Reorder_1 = parsed.Reorder_1;
+    KIT_DATA = parsed.KIT_DATA;
+    SecurityCounter = parsed.SecurityCounter;
+    SecurityCode = parsed.SecurityCode;
+
+    document.getElementById('reorder').value = Reorder_1;
+    document.getElementById('lot').value = KIT_DATA.LOT;
+    document.getElementById('sec').value = `${SecurityCounter} - ${SecurityCode}`;
+
+    if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    stopCameraStream();
+    document.getElementById('scannerModal').classList.remove('open');
+    showScannerAlert('');
+    showToast(t.toastLabelScanned);
+    verifyLabel();
+    return true;
+  }
+
+  return false;
+}
+
+/* ---------- Core Cryptographic SHA-256 & Verification Logic ---------- */
+function sha256Ascii(ascii) {
+  function rightRotate(value, amount) {
+    return (value >>> amount) | (value << (32 - amount));
+  }
+  const maxWord = Math.pow(2, 32);
+  const words = [];
+  const asciiBitLength = ascii.length * 8;
+
+  const hash = [
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+  ];
+  const k = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+  ];
+
+  ascii += '\x80';
+  while (ascii.length % 64 - 56) ascii += '\x00';
+  for (let i = 0; i < ascii.length; i++) {
+    const j = ascii.charCodeAt(i) & 0xff;
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words.length] = ((asciiBitLength / maxWord) | 0);
+  words[words.length] = (asciiBitLength);
+
+  for (let j = 0; j < words.length;) {
+    const w = words.slice(j, j += 16);
+    const oldHash = hash.slice(0);
+
+    for (let i = 0; i < 64; i++) {
+      const w15 = w[i - 15], w2 = w[i - 2];
+      const a = hash[0], e = hash[4];
+      const temp1 = hash[7]
+        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+        + ((e & hash[5]) ^ ((~e) & hash[6]))
+        + k[i]
+        + (w[i] = (i < 16) ? w[i] : (
+            w[i - 16]
+            + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+            + w[i - 7]
+            + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+          ) | 0
+        );
+      const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+        + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+
+      hash.unshift((temp1 + temp2) | 0);
+      hash[4] = (hash[4] + temp1) | 0;
+      hash.pop();
+    }
+    for (let i = 0; i < 8; i++) {
+      hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+  }
+  const hex = (hash[0] >>> 0).toString(16).toUpperCase().padStart(8, '0');
+  return hex.slice(0, 4) + '-' + hex.slice(4, 8);
+}
+
+function parseSecInput(raw) {
+  const cleaned = raw
+    .trim()
+    .replace(/^SEC\s*:?\s*/i, '')
+    .replace(/[–—]/g, '-')
+    .toUpperCase();
+
+  const match = cleaned.match(/^(\d+)\s*[-\s]\s*([0-9A-FO]{4})\s*-?\s*([0-9A-FO]{4})$/);
+  if (!match) return null;
+
+  const counter = String(parseInt(match[1], 10));
+  const part1 = match[2].replace(/O/g, '0');
+  const part2 = match[3].replace(/O/g, '0');
+
+  return {
+    counter,
+    code: `${part1}-${part2}`
+  };
+}
+
+function findPrintDates(r, l, counter, targetCode, key) {
+  const prefix = `${r}|${l}|${counter}|`;
+  const suffix = `|${key}`;
+  const startMs = Date.UTC(SEARCH_START_YEAR, 0, 1);
+  const endMs = Date.UTC(SEARCH_END_YEAR, 11, 31);
+  const dayMs = 86400000;
+  const matches = [];
+
+  for (let ms = startMs; ms <= endMs; ms += dayMs) {
+    const d = new Date(ms);
+    const yyyy = String(d.getUTCFullYear());
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const yyyymmdd = `${yyyy}${mm}${dd}`;
+
+    if (sha256Ascii(prefix + yyyymmdd + suffix) === targetCode) {
+      matches.push({
+        year: yyyy,
+        month: mm,
+        day: dd,
+        weekdayIndex: d.getUTCDay()
+      });
+    }
+  }
+  return matches;
+}
+
+function formatRecoveredDates(matches, lang) {
+  const weekdays = I18N[lang].weekdays;
+  return matches.map(m => {
+    const wd = weekdays[m.weekdayIndex];
+    const datePart = (lang === 'de')
+      ? `${m.day}.${m.month}.${m.year}`
+      : `${m.year}-${m.month}-${m.day}`;
+    return `${wd}, ${datePart}`;
+  }).join(' / ');
+}
+
+function renderResult(state) {
+  const t = I18N[currentLang];
+  const box = document.getElementById('resultBox');
+  const title = document.getElementById('resultTitle');
+  const badge = document.getElementById('dateBadge');
+  const badgeLabel = document.getElementById('dateBadgeLabel');
+  const badgeValue = document.getElementById('dateBadgeValue');
+  const sub = document.getElementById('resultSub');
+
+  badge.style.display = 'none';
+
+  if (state.type === 'incomplete') {
+    box.className = 'result warning';
+    title.textContent = t.incTitle;
+    sub.textContent = t.incSub;
+  } else if (state.type === 'format_error') {
+    box.className = 'result warning';
+    title.textContent = t.fmtTitle;
+    sub.textContent = t.fmtSub;
+  } else if (state.type === 'valid') {
+    box.className = 'result valid';
+    title.textContent = t.valTitle;
+    badge.style.display = 'block';
+    badgeLabel.textContent = t.printDateLabel;
+    badgeValue.textContent = formatRecoveredDates(state.matches, currentLang);
+    sub.textContent = t.valSub(state.r, state.l, state.counter, state.code, state.elapsedMs);
+  } else {
+    box.className = 'result invalid';
+    title.textContent = t.invTitle;
+    sub.textContent = t.invSub(state.r, state.l, state.counter, state.code);
+  }
+}
+
+function verifyLabel() {
+  const r = document.getElementById('reorder').value.trim().toUpperCase();
+  const l = document.getElementById('lot').value.trim().toUpperCase();
+  const secRaw = document.getElementById('sec').value;
+  const key = document.getElementById('secretKey').value;
+
+  if (!r || !l || !secRaw.trim()) {
+    lastState = { type: 'incomplete' };
+    renderResult(lastState);
+    return;
+  }
+
+  const parsed = parseSecInput(secRaw);
+  if (!parsed) {
+    lastState = { type: 'format_error' };
+    renderResult(lastState);
+    return;
+  }
+
+  Reorder_1 = r;
+  KIT_DATA = { LOT: l };
+  SecurityCounter = parsed.counter;
+  SecurityCode = parsed.code;
+
+  const t0 = performance.now();
+  const matches = findPrintDates(r, l, parsed.counter, parsed.code, key);
+  const elapsedMs = Math.max(1, Math.round(performance.now() - t0));
+
+  if (matches.length > 0) {
+    lastState = {
+      type: 'valid',
+      r,
+      l,
+      counter: parsed.counter,
+      code: parsed.code,
+      matches,
+      elapsedMs
+    };
+  } else {
+    lastState = {
+      type: 'invalid',
+      r,
+      l,
+      counter: parsed.counter,
+      code: parsed.code
+    };
+  }
+  renderResult(lastState);
+}
+
+/* ---------- Event Listeners & Startup Flow ---------- */
+['reorder', 'lot', 'sec'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      verifyLabel();
+    }
+  });
+});
+
+document.getElementById('sec').addEventListener('input', function() {
+  const r = document.getElementById('reorder').value.trim();
+  const l = document.getElementById('lot').value.trim();
+  const parsed = parseSecInput(this.value);
+  if (r && l && parsed) {
+    verifyLabel();
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopCameraStream();
+  } else if (document.getElementById('scannerModal').classList.contains('open')) {
+    startCameraStream();
+  }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  initSingleFilePwa();
+
+  const savedKey = localStorage.getItem('romer_sec_key');
+  if (savedKey) {
+    document.getElementById('secretKey').value = savedKey;
+  }
+  checkSecretAscii();
+  updateKeyStatusBar();
+
+  const savedLang = localStorage.getItem('romer_verify_lang');
+  setLang(savedLang || 'hu');
+
+  // Program indításakor: titkosító kulcs (SecretKey) bekérése kamerán keresztül (QR)
+  openQrScanner('secret');
+});
+</script>
+</body>
+</html>
